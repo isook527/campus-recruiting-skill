@@ -24,12 +24,14 @@ def application(job_id, state="met", complete=True):
                 "kind": "required", "requirement": "六级或同等外语能力",
                 "source": "模拟公告：应聘资格",
                 "state": state, "fact_ids": [] if state == "unknown" else ["F1"],
+                "evidence_type": None if state == "unknown" else "direct",
                 "next_step": "核对同等资格的证明",
             },
             {
                 "kind": "preferred", "requirement": "学生干部优先",
                 "source": "模拟公告：优先条件",
-                "state": "unknown", "fact_ids": [], "next_step": "按本人经历确认",
+                "state": "unknown", "fact_ids": [], "evidence_type": None,
+                "next_step": "按本人经历确认",
             },
         ],
         "resume_version": "cv-support-01",
@@ -49,7 +51,13 @@ def application(job_id, state="met", complete=True):
 class ApplicationPacketTest(unittest.TestCase):
     def setUp(self):
         self.data = {
-            "facts": {"F1": "提供了等效语言证明", "F2": "担任生活委员，记录班费及公示"},
+            "facts": {
+                "F1": {
+                    "text": "提供了等效语言证明", "provenance": "material",
+                    "source_detail": "模拟语言证明第1页",
+                },
+                "F2": {"text": "担任生活委员，记录班费及公示", "provenance": "user_confirmed"},
+            },
             "jobs": [example()],
             "reviews": [application("demo-001")],
         }
@@ -84,6 +92,24 @@ class ApplicationPacketTest(unittest.TestCase):
         criterion = self.data["reviews"][0]["criteria"][0]
         criterion.update(state="gap", fact_ids=[])
         with self.assertRaisesRegex(ValueError, "未提供资料"):
+            rank(self.data, NOW)
+
+    def test_transferable_experience_cannot_satisfy_hard_requirement(self):
+        self.data["reviews"][0]["criteria"][0]["evidence_type"] = "transferable"
+        with self.assertRaisesRegex(ValueError, "硬性资格"):
+            rank(self.data, NOW)
+
+    def test_packet_distinguishes_provenance_from_evidence_relation(self):
+        self.data["reviews"][0]["criteria"].append({
+            "kind": "duty", "requirement": "协助维护台账", "source": "模拟公告：岗位职责",
+            "state": "met", "fact_ids": ["F2"], "evidence_type": "transferable",
+            "next_step": "说明班费记录的具体方法",
+        })
+        packet = render_packet(self.data, rank(self.data, NOW), "demo-001")
+        self.assertIn("直接证据 | F1（材料支持 · 模拟语言证明第1页）", packet)
+        self.assertIn("可迁移经验 | F2（用户确认）", packet)
+        self.data["facts"]["F1"].pop("source_detail")
+        with self.assertRaisesRegex(ValueError, "材料位置"):
             rank(self.data, NOW)
 
     def test_renders_editable_resume_with_evidence_and_marks_pending(self):

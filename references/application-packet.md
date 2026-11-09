@@ -7,7 +7,7 @@
 1. 先按[岗位核验](job-verification.md)确认官方公告和同一岗位的投递入口。岗位与项目分开，过期记录和官网无法访问的记录按原规则处理。只贴 JD、截图或旧表时可以做准备分析，实时网申状态待核。
 2. 从具体岗位和适用的全局公告提取全部硬性条件，保留原始出处与例外。例如国内与境外毕业窗口分开，保留「六级 425 分或同等外语能力」里的「或」，不能把学历、专业、政治面貌、工作许可或证书的优先项当作硬门槛。仅用公告中确有的条件，不从校名、年龄、姓名或个人背景猜资格。资料缺失标为待确认。
 3. 用[简历与证据](resume-and-evidence.md)建立少量稳定事实编号。只登记用户已确认或材料可证明的经历、资格和产物。岗位职责逐条写成可观察动作，再标记直接证据、可迁移证据或缺口。有一个缺口时，给一个能改变决定的核对动作。
-4. 按用户明确的城市和招聘类型筛选后，排序使用三档。**优先准备投递**需要具体岗位仍在本次已核验窗口、硬性条件核对完整且本人逐项符合。**补核后再决定**包括未开始、只有项目入口、待确认资格、缺公告或缺实时投递证据。**跳过**用于确认关闭或确认不满足硬门槛的情况。档内先看截止，再看任务证据。不要编造录用概率或 ATS 分数。
+4. 按用户明确的城市和招聘类型筛选后，排序使用三档。**优先准备投递**需要具体岗位仍在本次已核验窗口、硬性条件核对完整且本人逐项符合。**补核后再决定**包括未开始、只有项目入口、待确认资格、缺公告或缺实时投递证据。**跳过**用于确认关闭或确认不满足硬门槛的情况。档内先看截止，再看有直接证据、可迁移经验的岗位任务数量。不要编造录用概率或 ATS 分数。
 
 ## 交付一岗一份
 
@@ -31,12 +31,12 @@ JSON 的顶层字段：
 | 字段 | 写法 |
 | --- | --- |
 | `jobs` | [岗位核验](job-verification.md#结构化核验记录)规定的数组 |
-| `facts` | 事实编号到用户已确认文本的字典，例如 `{"F1":"本人负责班费登记和公示"}` |
+| `facts` | 事实编号到对象的字典。每项含 `text` 与 `provenance`（`user_confirmed` 为用户确认，`material` 为材料支持）。材料支持时再填 `source_detail`，用文件名或页码等简短定位 |
 | `reviews` | 评估数组，每条含 `job_id`、`requirements_complete`、`criteria`。出包时同一条还需 `resume_version`、`resume`、`questions`、`checklist` |
-| `criteria` | 每项含 `kind`（`required`、`preferred`、`duty`）、`requirement`、`source`（具体公告小节或原文定位）、`state`（`met`、`gap`、`unknown`）、`fact_ids`、`next_step` |
+| `criteria` | 每项含 `kind`（`required`、`preferred`、`duty`）、`requirement`、`source`（具体公告小节或原文定位）、`state`（`met`、`gap`、`unknown`）、`fact_ids`、`evidence_type`（`direct` 为直接证据，`transferable` 为可迁移经验，缺事实填 `null`）、`next_step` |
 | `resume_version` | 可写进本地投递记录的简历版本，例如 `cv-ops-02`。新版本使用新编号 |
 | `resume` | 每项含 `section`（`education`、`experience`、`skills`）、`text`、`fact_ids`、`rationale` |
 | `questions` | 三项，每项含 `text`、`fact_ids`，引用本版简历用到的事实 |
 | `checklist` | 每项含 `item` 和 `state`（`done`、`todo`、`unknown`） |
 
-只有公告及适用的资格条款都读完才填 `requirements_complete: true`。确认不满足某个硬性条件也要引用本人事实，缺材料时使用 `unknown`。没有可靠网申证据时给岗位记录 `status: "unverified"`，并保留实际观察。脚本检查编号、日期、状态与引用关系，事实与文案是否匹配仍须逐句核对。没有 Python 时使用同一判断顺序和五项交付结构在对话中完成。
+只有公告及适用的资格条款都读完才填 `requirements_complete: true`。判断满足或不满足硬性条件都须引用直接事实。可迁移经验用于解释职责匹配，不能替代学历、语言或证书。缺关键事实时用 `unknown`。没有可靠网申证据时给岗位记录 `status: "unverified"`，并保留实际观察。脚本检查编号、日期、状态与引用关系，事实与文案是否匹配仍须逐句核对。没有 Python 时使用同一判断顺序和五项交付结构在对话中完成。

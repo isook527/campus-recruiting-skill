@@ -23,6 +23,8 @@ REASONS = {
 }
 KINDS = {"required": "硬性资格", "preferred": "优先条件", "duty": "岗位任务"}
 STATES = {"met": "有依据", "gap": "有缺口", "unknown": "待确认"}
+PROVENANCE = {"user_confirmed": "用户确认", "material": "材料支持"}
+RELATIONS = {"direct": "直接证据", "transferable": "可迁移经验"}
 SECTIONS = {"education": "教育背景", "experience": "相关经历", "skills": "技能与证书"}
 CHECKS = {"done": "已核对", "todo": "待处理", "unknown": "待确认"}
 VERSION = re.compile(r"[a-zA-Z0-9][a-zA-Z0-9_.-]{0,63}\Z")
@@ -42,8 +44,14 @@ def evidence_ids(ids, facts):
 
 def index_reviews(data):
     facts = data["facts"]
-    if not isinstance(facts, dict) or not all(filled(key) and filled(value) for key, value in facts.items()):
+    if not isinstance(facts, dict):
         raise ValueError("facts 须为事实编号到已确认事实的字典")
+    for key, fact in facts.items():
+        if not filled(key) or not isinstance(fact, dict) or not filled(fact.get("text")):
+            raise ValueError("每条事实须有编号和已确认内容")
+        origin = fact.get("provenance")
+        if origin not in PROVENANCE or (origin == "material" and not filled(fact.get("source_detail"))):
+            raise ValueError("每条事实须标记来源，材料支持的事实须标记材料位置")
     job_ids = {row["id"] for row in data["jobs"]}
     reviews = {}
     for review in data["reviews"]:
@@ -62,6 +70,11 @@ def index_reviews(data):
                 raise ValueError("标记有依据的要求须关联事实编号")
             if item["kind"] == "required" and item["state"] == "gap" and not ids:
                 raise ValueError("确认硬性不符须有候选人事实，未提供资料应标为待确认")
+            relation = item["evidence_type"]
+            if (ids and relation not in RELATIONS) or (not ids and relation is not None):
+                raise ValueError("有关联事实时须区分直接证据与可迁移经验")
+            if item["kind"] == "required" and item["state"] != "unknown" and relation != "direct":
+                raise ValueError("判断硬性资格只能用直接证据")
         reviews[key] = review
     return reviews
 
@@ -87,14 +100,18 @@ def rank(data, now):
     for job in data["jobs"]:
         review = reviews.get(job["id"], {})
         status = statuses[job["id"]]
-        matched_duties = sum(
-            item["kind"] == "duty" and item["state"] == "met"
-            for item in review.get("criteria", [])
+        matched = [
+            item for item in review.get("criteria", [])
+            if item["kind"] == "duty" and item["state"] == "met"
+        ]
+        direct_duties = sum(
+            item["evidence_type"] == "direct" for item in matched
         )
         ranked.append({
             "id": job["id"], "employer": job["employer"], "title": job["title"],
             "decision": decision(status, review), "verification": status,
-            "deadline": job["deadline"], "matched_duties": matched_duties,
+            "deadline": job["deadline"], "matched_duties": len(matched),
+            "direct_duties": direct_duties,
             "reasons": [
                 item["requirement"] for item in review.get("criteria", [])
                 if item["kind"] == "required" and item["state"] != "met"
@@ -103,12 +120,17 @@ def rank(data, now):
     last = datetime.max.replace(tzinfo=CHINA)
     return sorted(ranked, key=lambda row: (
         list(DECISIONS).index(row["decision"]), parse_boundary(row["deadline"])[0] or last,
-        -row["matched_duties"], row["id"],
+        -row["direct_duties"], -row["matched_duties"], row["id"],
     ))
 
 
 def cell(value):
     return " ".join(value.splitlines()).replace("|", r"\|")
+
+
+def fact_source(fact):
+    label = PROVENANCE[fact["provenance"]]
+    return f"{label} · {fact['source_detail']}" if fact["provenance"] == "material" else label
 
 
 def render_packet(data, ranked, job_id, replay=False):
@@ -145,7 +167,7 @@ def render_packet(data, ranked, job_id, replay=False):
     lines = [
         f"# {cell(job['employer'])} · {cell(job['title'])}投递准备包", "",
         f"**准备判断** {DECISIONS[row['decision']]}。{REASONS[row['verification']]}。",
-        f"**截止** {job['deadline'] or '未公布'}　**核验记录时间** {job['checked_at']}",
+        f"**截止** {job['deadline'] or '未公布'}　**记录时间** {job['checked_at']}",
         f"**简历版本** `{version}`",
     ]
     if replay or row["decision"] != "ready" or any(item["state"] != "done" for item in checklist):
@@ -164,13 +186,15 @@ def render_packet(data, ranked, job_id, replay=False):
         lines.append("尚未得到可核对的硬性条件。")
     lines.extend([
         "", "## 岗位要求和本人证据", "",
-        "| 类型 | 要求 | 公告出处 | 判断 | 事实 | 下一步 |",
-        "| --- | --- | --- | --- | --- | --- |",
+        "| 类型 | 要求 | 公告出处 | 判断 | 证据关系 | 事实及来源 | 下一步 |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
     ])
     for item in review["criteria"]:
         cells = [
             KINDS[item["kind"]], item["requirement"], item["source"], STATES[item["state"]],
-            "、".join(item["fact_ids"]) or "待补", item["next_step"],
+            RELATIONS.get(item["evidence_type"], "待确认"),
+            " / ".join(f"{key}（{fact_source(facts[key])}）" for key in item["fact_ids"]) or "待补",
+            item["next_step"],
         ]
         lines.append("| " + " | ".join(map(cell, cells)) + " |")
     lines.extend(["", "## 可编辑简历", "", "姓名与联系方式由本人填写。", ""])
@@ -182,7 +206,9 @@ def render_packet(data, ranked, job_id, replay=False):
             lines.append("")
     lines.extend(["## 改写依据", ""])
     for number, item in enumerate(resume, 1):
-        used = " / ".join(f"{key} {facts[key]}" for key in item["fact_ids"])
+        used = " / ".join(
+            f"{key} {facts[key]['text']}（{fact_source(facts[key])}）" for key in item["fact_ids"]
+        )
         lines.append(f"{number}. **{cell(item['text'])}**　{cell(item['rationale'])}。事实为 {cell(used)}")
     lines.extend(["", "## 投递前检查", ""])
     for item in checklist:
