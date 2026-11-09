@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["Q01", "Q02", "Q03"],
+  "properties": {
+    "Q01": {"type": "string", "minLength": 100},
+    "Q02": {"type": "string", "minLength": 100},
+    "Q03": {"type": "string", "minLength": 100}
+  }
+}
+
