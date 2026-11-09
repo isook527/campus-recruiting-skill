@@ -14,6 +14,12 @@ MAX_AGE = timedelta(hours=8)
 DATE_ONLY = re.compile(r"\d{4}-\d{2}-\d{2}\Z")
 STATUSES = {"verified_open", "campaign_open", "not_started", "closed", "unverified"}
 TYPES = {"campus", "internship", "public_hiring"}
+OFFICIAL_SOURCES = {"employer", "authorized_ats", "public_authority"}
+SOURCE_TYPES = OFFICIAL_SOURCES | {"third_party", "unknown"}
+WARNINGS = {
+    "unverified", "stale", "deadline_time_unconfirmed", "duplicate_requires_resolution",
+    "source_not_confirmed", "official_conflict",
+}
 FIELDS = {
     "id", "employer", "title", "batch", "scope", "employment_type", "city",
     "eligibility", "salary", "announcement_url", "application_url", "checked_at",
@@ -73,13 +79,22 @@ def identity(row):
     )
 
 
+def deadline_clock(value, now):
+    deadline, date_only = parse_boundary(value, end=True)
+    if deadline is None:
+        return {"precision": "unknown"}
+    if date_only:
+        return {"precision": "date", "calendar_days": (deadline.date() - now.date()).days}
+    return {"precision": "time", "seconds": int((deadline - now).total_seconds())}
+
+
 def check_record(row, now):
     if not isinstance(row, dict):
         raise ValueError("expected a JSON object for this record")
-    if set(row) != FIELDS:
+    if FIELDS - row.keys() or row.keys() - (FIELDS | {"source_type", "official_conflict"}):
         problems = []
         missing = sorted(FIELDS - row.keys())
-        unexpected = sorted(row.keys() - FIELDS)
+        unexpected = sorted(row.keys() - (FIELDS | {"source_type", "official_conflict"}))
         if missing:
             problems.append("missing fields " + ", ".join(missing))
         if unexpected:
@@ -97,6 +112,13 @@ def check_record(row, now):
         if not isinstance(row[key], str) or row[key] not in allowed:
             raise ValueError(f"invalid {key}. Use one of {', '.join(sorted(allowed))}.")
 
+    if "source_type" in row and (
+        not isinstance(row["source_type"], str) or row["source_type"] not in SOURCE_TYPES
+    ):
+        raise ValueError("invalid source_type. Use one of " + ", ".join(sorted(SOURCE_TYPES)) + ".")
+    if "official_conflict" in row and type(row["official_conflict"]) is not bool:
+        raise ValueError("official_conflict must be a boolean")
+
     for key in ("announcement_url", "application_url"):
         check_url(row[key], key)
     checked = parse_datetime(row["checked_at"])
@@ -108,6 +130,10 @@ def check_record(row, now):
         opens.date() > closes.date() if close_time_unknown else opens >= closes
     ):
         raise ValueError("opening is not before the deadline")
+    if row.get("official_conflict"):
+        return "official_conflict"
+    if "source_type" in row and row["source_type"] not in OFFICIAL_SOURCES:
+        return "source_not_confirmed"
     if row["status"] in {"verified_open", "campaign_open"}:
         expected = "position" if row["status"] == "verified_open" else "campaign"
         if row["scope"] != expected:
@@ -161,13 +187,19 @@ def audit(records, now):
             eligible.append({"id": row["id"], "scope": row["scope"], "status": result})
         else:
             excluded.append({"id": row["id"], "reason": result})
-    return {"as_of": now.isoformat(), "eligible_by_record": eligible, "excluded": excluded}
+    deadlines = {row["id"]: deadline_clock(row["deadline"], now) for row in records}
+    return {
+        "as_of": now.isoformat(), "eligible_by_record": eligible, "excluded": excluded,
+        "deadline_countdown": deadlines,
+        "warnings": [row for row in excluded if row["reason"] in WARNINGS],
+    }
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("records", type=Path, help="JSON records from a recent evidence check")
     parser.add_argument("--as-of", help="Replay historical rules at a timezone-aware ISO timestamp")
+    parser.add_argument("--warn-exit", action="store_true", help="Return exit code 1 on warnings")
     args = parser.parse_args()
     try:
         now = parse_datetime(args.as_of) if args.as_of else datetime.now(CHINA)
@@ -176,6 +208,8 @@ def main():
     except (OSError, ValueError, TypeError) as error:
         parser.exit(2, f"Invalid records: {error}\n")
     print(json.dumps(result, ensure_ascii=False, indent=2))
+    if args.warn_exit and result["warnings"]:
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

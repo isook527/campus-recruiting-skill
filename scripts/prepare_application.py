@@ -4,13 +4,13 @@
 import argparse
 import json
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
-from check_jobs import CHINA, audit, parse_boundary, parse_datetime
+from check_jobs import CHINA, OFFICIAL_SOURCES, audit, parse_boundary, parse_datetime
 
 
-DECISIONS = {"ready": "优先准备投递", "verify": "补核后再决定", "skip": "跳过"}
+DECISIONS = {"ready": "优先准备投递", "verify": "条件成立才投", "skip": "跳过"}
 REASONS = {
     "verified_open": "具体岗位的核验记录仍有效",
     "campaign_open": "项目开放，需再核具体岗位",
@@ -19,6 +19,8 @@ REASONS = {
     "unverified": "官网或投递状态待核",
     "stale": "核验记录已过时",
     "deadline_time_unconfirmed": "截止日当天的时刻待核",
+    "source_not_confirmed": "目前只有线索或来源尚未确认",
+    "official_conflict": "官方证据冲突，需复核后再提交",
     "duplicate_requires_resolution": "存在未解决的重复记录",
 }
 KINDS = {"required": "硬性资格", "preferred": "优先条件", "duty": "岗位任务"}
@@ -27,6 +29,9 @@ PROVENANCE = {"user_confirmed": "用户确认", "material": "材料支持"}
 RELATIONS = {"direct": "直接证据", "transferable": "可迁移经验"}
 SECTIONS = {"education": "教育背景", "experience": "相关经历", "skills": "技能与证书"}
 CHECKS = {"done": "已核对", "todo": "待处理", "unknown": "待确认"}
+TIERS = {"target": "对口", "safety": "保底", "stretch": "冲刺"}
+CHOICE_MODES = {"one_role", "ordered_preferences"}
+HARD_STATES = {"met": "满足", "gap": "不满足", "unknown": "待核"}
 VERSION = re.compile(r"[a-zA-Z0-9][a-zA-Z0-9_.-]{0,63}\Z")
 
 
@@ -56,11 +61,12 @@ def index_reviews(data):
         origin = fact.get("provenance")
         if origin not in PROVENANCE or (origin == "material" and not filled(fact.get("source_detail"))):
             raise ValueError("每条事实须标记来源，材料支持的事实须标记材料位置")
-    job_ids = {row["id"] for row in data["jobs"]}
+    jobs = {row["id"]: row for row in data["jobs"]}
     reviews = {}
+    confirmed_single_choices = set()
     for review in data["reviews"]:
         key = review["job_id"]
-        if key in reviews or key not in job_ids:
+        if key in reviews or key not in jobs:
             raise ValueError("岗位评估编号重复或无法找到原岗位")
         if type(review["requirements_complete"]) is not bool:
             raise ValueError("requirements_complete 须为布尔值")
@@ -79,6 +85,28 @@ def index_reviews(data):
                 raise ValueError("有关联事实时须区分直接证据与可迁移经验")
             if item["kind"] == "required" and item["state"] != "unknown" and relation != "direct":
                 raise ValueError("判断硬性资格只能用直接证据")
+        if "tier" in review and review["tier"] not in TIERS:
+            raise ValueError("tier 须为 target、safety 或 stretch")
+        if "effort_minutes" in review and (
+            type(review["effort_minutes"]) is not int or review["effort_minutes"] <= 0
+        ):
+            raise ValueError("effort_minutes 须为正整数")
+        for flag in ("rolling", "choice_confirmed"):
+            if flag in review and type(review[flag]) is not bool:
+                raise ValueError(f"{flag} 须为布尔值")
+        if "choice_mode" in review and review["choice_mode"] not in CHOICE_MODES:
+            raise ValueError("choice_mode 须为 one_role 或 ordered_preferences")
+        if "choice_group" in review and not filled(review["choice_group"]):
+            raise ValueError("choice_group 须为同一限额单位和批次的稳定标识")
+        if review.get("choice_mode") == "one_role" and review.get("choice_confirmed"):
+            job = jobs[key]
+            group = (review["choice_group"],) if "choice_group" in review else (
+                job["employer"], job["batch"],
+            )
+            group = tuple(" ".join(part.casefold().split()) for part in group)
+            if group in confirmed_single_choices:
+                raise ValueError("同一限报组只能确认一个岗位")
+            confirmed_single_choices.add(group)
         reviews[key] = review
     return reviews
 
@@ -90,6 +118,7 @@ def decision(status, review):
     if (
         status != "verified_open" or not review.get("requirements_complete") or not required
         or any(item["state"] != "met" for item in required)
+        or (review.get("choice_mode") and not review.get("choice_confirmed"))
     ):
         return "verify"
     return "ready"
@@ -116,16 +145,32 @@ def rank(data, now):
             "decision": decision(status, review), "verification": status,
             "deadline": job["deadline"], "matched_duties": len(matched),
             "direct_duties": direct_duties,
+            "tier": TIERS.get(review.get("tier"), "待分档"),
+            "source_type": job.get("source_type"),
+            "deadline_countdown": checked["deadline_countdown"][job["id"]],
+            "rolling": review.get("rolling", False),
+            "effort_minutes": review.get("effort_minutes"),
+            "choice_mode": review.get("choice_mode"),
+            "choice_pending": bool(review.get("choice_mode") and not review.get("choice_confirmed")),
             "reasons": [
                 item["requirement"] for item in review.get("criteria", [])
                 if item["kind"] == "required" and item["state"] != "met"
             ],
         })
     last = datetime.max.replace(tzinfo=CHINA)
-    return sorted(ranked, key=lambda row: (
-        list(DECISIONS).index(row["decision"]), parse_boundary(row["deadline"])[0] or last,
-        -row["direct_duties"], -row["matched_duties"], row["id"],
-    ))
+
+    def order(row):
+        deadline, _ = parse_boundary(row["deadline"])
+        urgent = deadline is not None and deadline <= now + timedelta(days=3)
+        timing = 0 if urgent else 1 if row["rolling"] else 2
+        return (
+            list(DECISIONS).index(row["decision"]), timing, (deadline or last) if urgent else last,
+            -row["direct_duties"], -row["matched_duties"],
+            row["source_type"] not in OFFICIAL_SOURCES,
+            row["effort_minutes"] or float("inf"), deadline or last, row["id"],
+        )
+
+    return sorted(ranked, key=order)
 
 
 def cell(value):
@@ -142,11 +187,15 @@ def render_packet(data, ranked, job_id, replay=False):
     review = next((item for item in data["reviews"] if item["job_id"] == job_id), None)
     if row is None or review is None:
         raise ValueError("生成投递包需要同一岗位的核验记录和评估")
+    if row["decision"] == "skip":
+        reason = "、".join(row["reasons"]) or REASONS[row["verification"]]
+        raise ValueError(f"该岗位已排除，停止生成定制投递包。{reason}")
     job = next(item for item in data["jobs"] if item["id"] == job_id)
     facts = data["facts"]
     resume = review["resume"]
     questions = review["questions"]
     checklist = review["checklist"]
+    form_fields = review.get("form_fields", [])
     version = review["resume_version"]
     if not isinstance(version, str) or not VERSION.fullmatch(version):
         raise ValueError("简历版本须为稳定的短编号")
@@ -168,6 +217,17 @@ def render_packet(data, ranked, job_id, replay=False):
         if item["state"] not in CHECKS or not filled(item["item"]):
             raise ValueError("核对项须有说明及有效状态")
 
+    for item in form_fields:
+        if not filled(item["label"]) or not filled(item["constraint"]) or not filled(item["source"]):
+            raise ValueError("表单字段须注明字段名、限制和出处")
+        ids = evidence_ids(item["fact_ids"], facts)
+        draft = item.get("text")
+        if draft is not None and (not filled(draft) or not ids):
+            raise ValueError("表单草稿须回指已确认事实，缺资料时填 null")
+        limit = item.get("max_chars")
+        if limit is not None and (type(limit) is not int or limit <= 0):
+            raise ValueError("max_chars 须为正整数")
+
     lines = [
         f"# {cell(job['employer'])} · {cell(job['title'])}投递准备包", "",
         f"**准备判断** {DECISIONS[row['decision']]}。{REASONS[row['verification']]}。",
@@ -176,6 +236,13 @@ def render_packet(data, ranked, job_id, replay=False):
     ]
     if replay or row["decision"] != "ready" or any(item["state"] != "done" for item in checklist):
         lines.append("**材料状态**　准备草稿，待核事项见下方清单。")
+    if row["decision"] == "verify":
+        gates = ["具体岗位及入口仍有效", "全部硬门槛核实且满足"]
+        gates.extend(row["reasons"])
+        if row["choice_pending"]:
+            gates.append("本人已确认志愿与占用规则")
+        lines.append("**投递条件** 若" + "、".join(map(cell, gates))
+                     + "均已确认，可投。任一不成立则不投，待核期间只备料。")
     if replay:
         lines.append("**历史回放**　当前开放状态仍需重新核验。")
     links = [
@@ -189,18 +256,28 @@ def render_packet(data, ranked, job_id, replay=False):
     if not any(item["kind"] == "required" for item in review["criteria"]):
         lines.append("尚未得到可核对的硬性条件。")
     lines.extend([
-        "", "## 岗位要求和本人证据", "",
-        "| 类型 | 要求 | 公告出处 | 判断 | 证据关系 | 事实及来源 | 下一步 |",
-        "| --- | --- | --- | --- | --- | --- | --- |",
+        "", "## 硬门槛", "",
+        "| 要求及出处 | 判断 | 事实及来源 | 核对动作 |",
+        "| --- | --- | --- | --- |",
     ])
+    soft = []
     for item in review["criteria"]:
-        cells = [
-            KINDS[item["kind"]], item["requirement"], item["source"], STATES[item["state"]],
-            RELATIONS.get(item["evidence_type"], "待确认"),
-            " / ".join(f"{key}（{fact_source(facts[key])}）" for key in item["fact_ids"]) or "待补",
-            item["next_step"],
-        ]
-        lines.append("| " + " | ".join(map(cell, cells)) + " |")
+        facts_label = " / ".join(
+            f"{key}（{fact_source(facts[key])}）" for key in item["fact_ids"]
+        ) or "待补"
+        requirement = f"{item['requirement']} · {item['source']}"
+        if item["kind"] == "required":
+            relation = RELATIONS.get(item["evidence_type"])
+            evidence = f"{relation} · {facts_label}" if relation else facts_label
+            cells = [requirement, HARD_STATES[item["state"]], evidence, item["next_step"]]
+            lines.append("| " + " | ".join(map(cell, cells)) + " |")
+        else:
+            relation = RELATIONS.get(item["evidence_type"], "待确认")
+            soft.append(
+                f"- **{KINDS[item['kind']]} · {cell(requirement)}**　{STATES[item['state']]}。"
+                f"{relation} · {cell(facts_label)}。{cell(item['next_step'])}"
+            )
+    lines.extend(["", "## 软匹配", "", *(soft or ["暂无可核对的优先项或岗位任务。"])])
     lines.extend(["", "## 可编辑简历", "", "姓名与联系方式由本人填写。", ""])
     for key, label in SECTIONS.items():
         section = [item for item in resume if item["section"] == key]
@@ -214,13 +291,30 @@ def render_packet(data, ranked, job_id, replay=False):
             f"{key} {facts[key]['text']}（{fact_source(facts[key])}）" for key in item["fact_ids"]
         )
         lines.append(f"{number}. **{cell(item['text'])}**　{cell(item['rationale'])}。事实为 {cell(used)}")
+    if form_fields:
+        lines.extend(["", "## 网申表单字段稿", ""])
+        for item in form_fields:
+            draft = item.get("text")
+            constraint = cell(item["constraint"])
+            lines.append(f"- **{cell(item['label'])}**　{constraint}（{cell(item['source'])}）")
+            if draft is None:
+                lines.append("  - 待本人补充或在官方页面填写。")
+                continue
+            lines.append(f"  - {cell(draft)}（{len(draft)} 个 Unicode 字符）")
+            if item.get("max_chars") and len(draft) > item["max_chars"]:
+                lines.append("  - 超出记录的字符上限。请缩短并用网申计数器复核。")
     lines.extend(["", "## 投递前检查", ""])
     for item in checklist:
         mark = "x" if item["state"] == "done" else " "
         lines.append(f"- [{mark}] {cell(item['item'])}（{CHECKS[item['state']]}）")
     lines.extend(["", "## 简历追问", ""])
-    lines.extend(f"{i}. {cell(item['text'])}（{'、'.join(item['fact_ids'])}）"
-                 for i, item in enumerate(questions, 1))
+    for i, item in enumerate(questions, 1):
+        lines.append(f"{i}. {cell(item['text'])}（{'、'.join(item['fact_ids'])}）")
+        anchors = item.get("answer_anchor", "说明本人实际动作、产出物与可核对依据。")
+        red_line = item.get("red_line", "补造未确认数字，或把团队成果当成本人贡献。")
+        if not filled(anchors) or not filled(red_line):
+            raise ValueError("追问的好答案要点和红线须为非空文本")
+        lines.extend([f"   - 好答案要点　{cell(anchors)}", f"   - 红线　{cell(red_line)}"])
     return "\n".join(lines) + "\n"
 
 

@@ -1,0 +1,12 @@
+{
+  "event_id": "evt-synthetic-interview-001",
+  "job_id": "synthetic-admin-interview-2027",
+  "employer": "合成测试单位B",
+  "title": "行政项目支持岗（合成测试）",
+  "stage": "interview",
+  "at": "2026-11-09T12:00:00+08:00",
+  "resume_version": "cv-admin-01",
+  "next_action": "按JD准备一题台账准确性和一题材料催收的结构化回答",
+  "due_at": "2026-11-10",
+  "feedback": null
+}

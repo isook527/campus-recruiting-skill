@@ -111,8 +111,8 @@ class ApplicationPacketTest(unittest.TestCase):
             "next_step": "说明班费记录的具体方法",
         })
         packet = render_packet(self.data, rank(self.data, NOW), "demo-001")
-        self.assertIn("直接证据 | F1（材料支持 · 模拟语言证明第1页）", packet)
-        self.assertIn("可迁移经验 | F2（用户确认）", packet)
+        self.assertIn("直接证据 · F1（材料支持 · 模拟语言证明第1页）", packet)
+        self.assertIn("可迁移经验 · F2（用户确认）", packet)
         self.data["facts"]["F1"].pop("source_detail")
         with self.assertRaisesRegex(ValueError, "材料位置"):
             rank(self.data, NOW)
@@ -128,6 +128,50 @@ class ApplicationPacketTest(unittest.TestCase):
         self.assertIn("历史回放", packet)
         self.assertIn("cv-support-01", packet)
         self.assertEqual(packet.count("（F2）"), 3)
+
+    def test_hard_gap_stops_packet_even_when_resume_is_present(self):
+        self.data["reviews"][0] = application("demo-001", state="gap")
+        with self.assertRaisesRegex(ValueError, "停止生成定制投递包"):
+            render_packet(self.data, rank(self.data, NOW), "demo-001")
+
+    def test_rolling_and_application_choice_affect_queue(self):
+        self.data["jobs"].extend([
+            example(id="due-soon", city="杭州", deadline="2030-11-11"),
+            example(id="rolling", city="上海", source_type="employer"),
+            example(id="other-choice", city="深圳"),
+        ])
+        self.data["reviews"].extend([
+            application("due-soon"),
+            {**application("rolling"), "rolling": True, "tier": "target"},
+            {**application("other-choice"), "choice_mode": "one_role"},
+        ])
+        results = rank(self.data, NOW)
+        self.assertEqual([row["id"] for row in results[:2]], ["due-soon", "rolling"])
+        self.assertEqual(results[1]["tier"], "对口")
+        self.assertTrue(results[-1]["choice_pending"])
+        self.assertEqual(results[-1]["decision"], "verify")
+        for index in (0, 3):
+            self.data["reviews"][index].update(choice_mode="one_role", choice_confirmed=True)
+        with self.assertRaisesRegex(ValueError, "同一限报组"):
+            rank(self.data, NOW)
+
+    def test_conditional_packet_has_mobile_table_form_limits_and_answer_anchors(self):
+        review = self.data["reviews"][0] = application("demo-001", state="unknown")
+        review["questions"][0].update(answer_anchor="先说记录与公示的顺序", red_line="虚构金额")
+        review["form_fields"] = [
+            {"label": "项目经历", "constraint": "最多 4 字", "source": "模拟字段",
+             "fact_ids": ["F2"], "text": "记录班费并公示", "max_chars": 4},
+            {"label": "联系方式", "constraint": "本人填写", "source": "模拟字段",
+             "fact_ids": [], "text": None},
+        ]
+        packet = render_packet(self.data, rank(self.data, NOW), "demo-001")
+        self.assertIn("均已确认，可投。任一不成立则不投", packet)
+        self.assertEqual(next(line for line in packet.splitlines() if line.startswith("| 要求")).count("|"), 5)
+        self.assertIn("## 软匹配", packet)
+        self.assertIn("超出记录的字符上限", packet)
+        self.assertIn("待本人补充", packet)
+        self.assertIn("好答案要点　先说记录与公示的顺序", packet)
+        self.assertIn("红线　虚构金额", packet)
 
     def test_refuses_unconfirmed_resume_facts_or_unrelated_questions(self):
         ranked = rank(self.data, NOW)

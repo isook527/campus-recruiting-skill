@@ -1,3 +1,4 @@
+from datetime import date
 import json
 import subprocess
 import sys
@@ -9,6 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 from check_jobs import audit, parse_datetime  # noqa: E402
+from check_sources import source_status  # noqa: E402
 
 
 NOW = parse_datetime("2030-11-09T16:00:00+08:00")
@@ -92,6 +94,47 @@ class CheckJobsTest(unittest.TestCase):
     def test_same_title_in_distinct_cities_is_preserved(self):
         result = audit([example(), example(id="demo-002", city="上海")], NOW)
         self.assertEqual(len(result["eligible_by_record"]), 2)
+
+    def test_explicit_source_type_and_official_conflict_are_fail_closed(self):
+        self.assertEqual(self.reason(source_type="third_party"), "source_not_confirmed")
+        self.assertEqual(self.reason(source_type="unknown"), "source_not_confirmed")
+        self.assertEqual(self.reason(source_type="employer", official_conflict=True), "official_conflict")
+        with self.assertRaisesRegex(ValueError, "invalid source_type"):
+            audit([example(source_type="official")], NOW)
+
+    def test_deadline_countdown_preserves_precision(self):
+        for deadline, expected in [
+            (None, {"precision": "unknown"}),
+            ("2030-11-10", {"precision": "date", "calendar_days": 1}),
+            ("2030-11-10T12:00:00+08:00", {"precision": "time", "seconds": 72000}),
+        ]:
+            with self.subTest(deadline=deadline):
+                self.assertEqual(audit([example(deadline=deadline)], NOW)["deadline_countdown"]["demo-001"], expected)
+
+    def test_cli_warning_exit_and_validation_error_are_distinct(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            data = Path(temporary) / "jobs.json"
+            cli = [sys.executable, str(ROOT / "scripts/check_jobs.py"), str(data),
+                   "--as-of", NOW.isoformat(), "--warn-exit"]
+            data.write_text(json.dumps([example(checked_at="2030-11-09T07:59:00+08:00")]))
+            warned = subprocess.run(cli, capture_output=True, text=True)
+            self.assertEqual(warned.returncode, 1)
+            self.assertEqual(json.loads(warned.stdout)["warnings"][0]["reason"], "stale")
+            data.write_text(json.dumps([example(status="invented")]))
+            invalid = subprocess.run(cli, capture_output=True, text=True)
+            self.assertEqual(invalid.returncode, 2)
+            self.assertIn("invalid status", invalid.stderr)
+
+    def test_source_navigation_expiry_is_independent_of_job_freshness(self):
+        sources = "\n".join([
+            "| [刚核验](https://example.org/) | 导航 | 2030-10-10 |",
+            "| [旧入口](https://example.org/) | 导航 | 2030-10-09 |",
+            "| [未知](https://example.org/) | 导航 | — |",
+        ])
+        self.assertEqual(
+            [status for _, status, _ in source_status(sources, date(2030, 11, 9))],
+            ["导航日期有效", "需重新核对", "需重新核对"],
+        )
 
     def test_cli_uses_default_schema_and_timezone(self):
         with tempfile.TemporaryDirectory() as temporary:

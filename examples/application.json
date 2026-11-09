@@ -1,0 +1,191 @@
+{
+  "jobs": [
+    {
+      "id": "synthetic-general-beijing-2027",
+      "employer": "合成测试单位A",
+      "title": "综合职能岗（合成测试）",
+      "batch": "2027届秋招（合成测试）",
+      "scope": "position",
+      "employment_type": "campus",
+      "city": "北京",
+      "eligibility": "JD摘录：2027届本科及以上，六级425分或同等外语能力；学生干部优先",
+      "salary": null,
+      "announcement_url": null,
+      "application_url": null,
+      "checked_at": "2026-11-09T15:00:00+08:00",
+      "opens_at": null,
+      "deadline": null,
+      "status": "unverified",
+      "announcement_evidence": "仅有用户贴出的JD摘录，未核对完整公告；本记录为合成前向测试。",
+      "application_evidence": null,
+      "source_type": "unknown"
+    }
+  ],
+  "facts": {
+    "F1": {
+      "text": "本人在国内读本科，预计2027年6月毕业",
+      "provenance": "user_confirmed"
+    },
+    "F2": {
+      "text": "本人担任过班级生活委员",
+      "provenance": "user_confirmed"
+    },
+    "F3": {
+      "text": "本人负责班费记录和公示",
+      "provenance": "user_confirmed"
+    },
+    "F4": {
+      "text": "本人没有留存可确认的班费金额",
+      "provenance": "user_confirmed"
+    }
+  },
+  "reviews": [
+    {
+      "job_id": "synthetic-general-beijing-2027",
+      "requirements_complete": false,
+      "criteria": [
+        {
+          "kind": "required",
+          "requirement": "2027届",
+          "source": "用户贴出的JD摘录",
+          "state": "met",
+          "fact_ids": [
+            "F1"
+          ],
+          "next_step": "从完整官方公告核对境内毕业时间窗口",
+          "evidence_type": "direct"
+        },
+        {
+          "kind": "required",
+          "requirement": "本科及以上",
+          "source": "用户贴出的JD摘录",
+          "state": "met",
+          "fact_ids": [
+            "F1"
+          ],
+          "next_step": "从完整官方公告核对学历与学位口径",
+          "evidence_type": "direct"
+        },
+        {
+          "kind": "required",
+          "requirement": "六级425分或同等外语能力",
+          "source": "用户贴出的JD摘录",
+          "state": "unknown",
+          "fact_ids": [],
+          "next_step": "确认六级成绩或公告认可的同等外语证明",
+          "evidence_type": null
+        },
+        {
+          "kind": "preferred",
+          "requirement": "学生干部优先",
+          "source": "用户贴出的JD摘录",
+          "state": "met",
+          "fact_ids": [
+            "F2"
+          ],
+          "next_step": "核对可证明班委任职的材料；优先条件不当作硬门槛",
+          "evidence_type": "direct"
+        },
+        {
+          "kind": "duty",
+          "requirement": "协助维护台账",
+          "source": "用户贴出的JD摘录",
+          "state": "met",
+          "fact_ids": [
+            "F3",
+            "F4"
+          ],
+          "next_step": "用班费记录与公示说明可迁移动作，不添加金额",
+          "evidence_type": "transferable"
+        }
+      ],
+      "resume_version": "cv-general-01",
+      "resume": [
+        {
+          "section": "education",
+          "text": "国内本科在读，预计2027年6月毕业。",
+          "fact_ids": [
+            "F1"
+          ],
+          "rationale": "对应届次和学历要求；未添加学校、专业、成绩等未提供信息"
+        },
+        {
+          "section": "experience",
+          "text": "担任班级生活委员，整理班费收支记录和公示内容，向班级公开班费使用情况。",
+          "fact_ids": [
+            "F2",
+            "F3",
+            "F4"
+          ],
+          "rationale": "对应学生干部偏好和维护台账任务；没有加入未留存的金额或人数"
+        }
+      ],
+      "questions": [
+        {
+          "text": "你在班费记录中本人具体负责哪些步骤？",
+          "fact_ids": [
+            "F2",
+            "F3"
+          ],
+          "answer_anchor": "先讲自己实际记录和公示的步骤，讲清与其他班委的分工。",
+          "red_line": "把未确认的核账流程或其他班委的工作说成自己做的。"
+        },
+        {
+          "text": "班费公示时你交付了什么内容，现在哪些材料还能核对？",
+          "fact_ids": [
+            "F3",
+            "F4"
+          ],
+          "answer_anchor": "说清公示包含哪些已确认信息。能定位的记录可脱敏说明，未保留的明确说出。",
+          "red_line": "编造台账字段、公示频率或证明材料。"
+        },
+        {
+          "text": "为什么简历没有写经手金额，你会怎样向面试官说明这个边界？",
+          "fact_ids": [
+            "F4"
+          ],
+          "answer_anchor": "金额无法核实，仍可说明本人负责什么、给班级交付了什么。",
+          "red_line": "估填金额、人数或量化成效。"
+        }
+      ],
+      "checklist": [
+        {
+          "item": "找到并核对完整官方公告、对应岗位网申页和截止时间",
+          "state": "unknown"
+        },
+        {
+          "item": "确认六级425分或同等外语能力证明",
+          "state": "unknown"
+        },
+        {
+          "item": "补全学校、专业和联系方式后再导出正式简历",
+          "state": "todo"
+        },
+        {
+          "item": "核对班委任职与班费记录可证明材料",
+          "state": "todo"
+        }
+      ],
+      "form_fields": [
+        {
+          "label": "项目经历（模拟字段）",
+          "constraint": "必填，最多 100 字",
+          "source": "合成表单",
+          "text": "担任班级生活委员，整理班费收支记录和公示内容，向班级公开班费使用情况。",
+          "fact_ids": [
+            "F2",
+            "F3"
+          ],
+          "max_chars": 100
+        },
+        {
+          "label": "外语证明（模拟字段）",
+          "constraint": "必填，材料要求以公告为准",
+          "source": "合成表单",
+          "text": null,
+          "fact_ids": []
+        }
+      ]
+    }
+  ]
+}
