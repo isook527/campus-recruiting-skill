@@ -188,7 +188,9 @@ def render_packet(data, ranked, job_id, replay=False):
     if row is None or review is None:
         raise ValueError("生成投递包需要同一岗位的核验记录和评估")
     if row["decision"] == "skip":
-        reason = "、".join(row["reasons"]) or REASONS[row["verification"]]
+        reason = REASONS["closed"]
+        if row["verification"] != "closed":
+            reason = "硬门槛不满足：" + "、".join(row["reasons"])
         raise ValueError(f"该岗位已排除，停止生成定制投递包。{reason}")
     job = next(item for item in data["jobs"] if item["id"] == job_id)
     facts = data["facts"]
