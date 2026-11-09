@@ -136,6 +136,17 @@ class ApplicationPacketTest(unittest.TestCase):
         example = (ROOT / "examples/application.md").read_text(encoding="utf-8")
         self.assertEqual(example.split("\n\n", 1)[1], packet)
 
+    def test_packet_flags_when_a_matched_duty_loses_its_only_resume_evidence(self):
+        self.data["facts"]["F3"] = {"text": "用共享表维护任务进度", "provenance": "user_confirmed"}
+        self.data["reviews"][0]["criteria"].append({
+            "kind": "duty", "requirement": "跟踪项目进度", "source": "模拟岗位",
+            "state": "met", "fact_ids": ["F3"], "evidence_type": "direct",
+            "next_step": "核对共享表字段",
+        })
+        packet = render_packet(self.data, rank(self.data, NOW), "demo-001")
+        self.assertIn("跟踪项目进度对应的已知事实 F3 未在本版简历引用", packet)
+        self.assertNotIn("用共享表维护任务进度", packet.split("## 可编辑简历")[1].split("## 改写依据")[0])
+
     def test_hard_gap_stops_packet_even_when_resume_is_present(self):
         self.data["reviews"][0] = application("demo-001", state="gap")
         with self.assertRaisesRegex(ValueError, "停止生成定制投递包"):

@@ -306,6 +306,16 @@ def render_packet(data, ranked, job_id, replay=False):
             lines.append(f"  - {cell(draft)}（{len(draft)} 个 Unicode 字符）")
             if item.get("max_chars") and len(draft) > item["max_chars"]:
                 lines.append("  - 超出记录的字符上限。请缩短并用网申计数器复核。")
+    omitted = [
+        item for item in review["criteria"]
+        if item["kind"] == "duty" and item["state"] == "met"
+        and not resume_facts.intersection(item["fact_ids"])
+    ]
+    if omitted:
+        lines.extend(["", "## 简历证据覆盖复核", ""])
+        for item in omitted:
+            ids = "、".join(item["fact_ids"])
+            lines.append(f"- {cell(item['requirement'])}对应的已知事实 {cell(ids)} 未在本版简历引用。")
     lines.extend(["", "## 投递前检查", ""])
     for item in checklist:
         mark = "x" if item["state"] == "done" else " "
