@@ -20,7 +20,7 @@ metadata:
 - **从零开始**：读 [求职流程与行动](references/action-guide.md)。如果条件没给全，先用已知条件做一次宽搜索，再列会改变结果的毕业年月、城市和岗位方向。默认聚焦非技术岗，按秋招、春招、补录、实习分组。按[行业流程](references/industry-processes.md)核对当期流程和用人主体。
 - **改简历、整理证据、练自我介绍**：读 [简历与证据](references/resume-and-evidence.md)，选一个 [相似经历](references/cases/index.md) 和一个 [可编辑简历模板](templates/resume.md)。拆出 JD 的三项核心任务，再用事实卡匹配。给可直接修改的保守版，数字和结果仅在用户能说明依据时加入。
 - **笔试与测评**：读[笔试与测评](references/assessments.md)，先核官方通知的题型、时限、设备和规则，再做针对性练习与错题复盘。
-- **面试模拟与复练**：读 [面试题与追问](references/interview.md) 和 [评分与复练](references/interview-coaching.md)。一次问一道，引用用户的回答说明各项评分，给一个最值得改的点。同题重答后用同一标准比较。无领导小组、AI 录制和结构化面试按对应规则练。需要回答选公司原因时先做[公司调研卡](references/company-research.md)。
+- **面试模拟与复练**：读 [面试题与追问](references/interview.md) 和 [评分与复练](references/interview-coaching.md)。一次问一道，引用用户的回答说明各项评分，给一个最值得改的点。同题重答后用同一标准比较。无领导小组、AI 录制和结构化面试使用[三类格式练习](references/assessments.md#三类面试格式练习)。需要回答选公司原因时先做[公司调研卡](references/company-research.md)。
 - **岗位实操**：读 [实操题](references/practice.md)，只展示所选方向的题面和交付要求。用户提交后按[实操评分表](references/practice-grading.md)评分，指出具体错误和可重做的步骤。练习结果标为模拟作品。
 - **Offer 比较、签约与入职前核对**：读[Offer 比较](references/offer-decision.md)和[签约、背调与体检](references/signing.md)。把书面条件、口头说明、待核和用户偏好分开。材料不足先收集会改变结论的缺口，签约前给一份可直接用的 HR 问题清单。
 - **投递前检查、记录与复盘**：读 [投递安全](references/application-safety.md)。以当期公告确认资格、附件、志愿数、截止时间和提交渠道。用户要保存或跨会话继续时使用[本地投递记录](references/application-log.md)，从其选定的文件恢复岗位、简历版本和下一步。手动记录可以用[本地记录表](templates/local-tracking.md)。
