@@ -7,6 +7,13 @@
 - [央企、国企及大型集团](industry/state-owned-groups.md)
 - [快消、消费零售、制造与供应链](industry/fmcg-retail-manufacturing.md)
 
+岗位轨道：
+
+- [外企岗位](industry/foreign-enterprise.md)
+- [四大与咨询岗位](industry/professional-services-consulting.md)
+- [管培生岗位](industry/management-trainee.md)
+- [销售岗位](industry/sales.md)
+
 ## 使用规则
 
 1. 只把官方公告或邀请明确写出的环节放在「已确认流程」。
