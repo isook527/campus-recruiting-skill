@@ -1,80 +1,84 @@
 # 秋招求职助手
 
-给非技术岗应届求职者用的免费开源 Skill。它在 Agent 对话里用一份本地档案做求职季规划、岗位核验、简历和网申准备、笔面试练习、Offer 比较与投递漏斗诊断。所有材料随源码开放，无需付费、激活或登录专用工作台。
+![秋招求职助手 v1.3.0。从查岗位到投递复盘，面向中国校招非技术岗。](docs/images/v1.3.0-overview.png)
 
-**What it is.** An open-source agent skill for planning, applying to, and tracking campus recruitment in China. **Who it’s for.** Students and recent graduates targeting non-technical roles. **Install.** Download and unzip a release, then place the `campus-recruiting-skill` folder in your agent’s Skills directory.
+面向中国校招非技术岗的开源 Skill，适合准备秋招、春招、补录或实习的同学。给它一个岗位说明和一到两段真实经历，就能先判断资格，再准备一份可编辑的投递材料。之后可以用同一份本地档案继续练笔面试、比较 Offer 和复盘投递。
 
-发一个岗位链接和一到两段真实经历，即可开始准备一份针对该岗位的投递包。适合运营市场、银行与综合职能、人力行政和项目支持等方向。
+**[下载 v1.3.0 ZIP](https://github.com/isook527/campus-recruiting-skill/releases/download/v1.3.0/campus-recruiting-skill-v1.3.0.zip)** · [正式 Release 和校验文件](https://github.com/isook527/campus-recruiting-skill/releases/tag/v1.3.0) · [版本记录](CHANGELOG.md)
 
-[GitHub 下载与校验文件](https://github.com/isook527/campus-recruiting-skill/releases) · [版本记录](CHANGELOG.md)
+This open-source agent skill helps you prepare and track campus job applications in China. It’s for students and recent graduates targeting non-technical roles. Download and unzip a release, then copy the `campus-recruiting-skill` folder into your agent’s skills directory.
 
-## 三步开始
+## v1.3.0 能帮你做什么
 
-1. 在 Releases 选择所需版本，下载 Skill ZIP 并解压，确认 `campus-recruiting-skill/` 下面直接包含 `SKILL.md`。从 Git 克隆的读者可以使用默认分支。
-2. 把整个文件夹放进对应的 Skills 目录。Codex 使用 `~/.codex/skills/`，Claude Code 使用 `~/.claude/skills/`。装过旧版时，先备份旧 Skill 目录，再替换整份文件夹。个人投递记录放在单独的本地目录。旧 SQLite 记录可以直接复盘，继续追加前按[迁移说明](references/application-log.md)备份升级。
-3. 重新打开工具。在 Codex 对话输入 `$campus-recruiting-skill`。也可以直接让 Agent 读取 [SKILL.md](SKILL.md) 并按里面的流程处理。询问已安装版本时，Skill 会读取 `metadata.version`。
+| 你想做什么 | 给 Skill 什么 | 会得到什么 |
+| --- | --- | --- |
+| 查岗位、安排投递 | 城市、毕业年月、岗位方向，或一条 JD | 资格、截止时间、官网和网申证据，以及本周投递顺序 |
+| 准备投递包 | 一个岗位和一到两段真实经历 | 可编辑简历、网申字段稿、改写依据、附件清单和三道追问 |
+| 练笔面试、比较 Offer | 目标岗位、面试轮次，或已脱敏的书面条件 | 分轮次练习与评分，或一份可对照的条件表和待核问题 |
+| 继续上次的进度 | 已保存的本地档案或投递库 | 沿用已确认的事实，分开统计待反馈、主动退出和已知结果，给出下一步 |
 
-> 这是我的岗位说明和两段真实经历。帮我核对硬性资格，做一份可编辑简历、改写依据、附件检查和三道追问。
+## 三步安装
 
-实时岗位核验使用 Agent 已有的网页工具。只贴出 JD 时也可以先准备简历，网申状态保持待核。批量校验和本地投递记录使用 Python 3.9+ 标准库。
+1. 下载 ZIP 并解压。确认目录结构为 `campus-recruiting-skill/SKILL.md`。
+2. 把整个 `campus-recruiting-skill` 目录放到对应位置。Codex 使用 `~/.agents/skills/`，Claude Code 使用 `~/.claude/skills/`。安装过旧版时，先备份旧 Skill。个人投递库放在单独的目录。
+3. 开启新对话。在 Codex 中输入 `$campus-recruiting-skill`，或让 Agent 读取 [SKILL.md](SKILL.md) 并按其中流程执行。
 
-## 先保存一份求职档案
+[安装路径参考](https://developers.openai.com/api/reference/cli)
 
-告诉 Agent「在我选定的私人目录新建档案，记下我确认过的毕业年月、意向城市和经历编号」。以后在新对话指定同一份文件，可沿用事实与偏好。也可以直接用命令初始化。详见[共享求职档案](references/candidate-profile.md)。
+> 这是岗位说明和我的两段经历。请先核对资格，再给我一份可编辑简历、网申字段稿和三道面试追问。
+
+实时核岗需要 Agent 可访问网页。只有 JD 时仍可准备草稿，网申状态保留为待核。批量校验、档案和投递记录脚本使用 Python 3.9+ 标准库。
+
+## 用一个模拟案例走一遍
+
+以下岗位、经历和统计均为合成示例。第一步和第二步使用一份综合职能岗 JD，第三步用六条模拟投递演示漏斗。
+
+### 01 · 判断现在该投还是备料
+
+候选人已知的届次和学历符合。六级或同等外语证明、网申开放状态还待核。此时可以先准备材料，待官网和网申页确认岗位开放、资格核对无误后再由本人投递。
+
+![岗位判断示例。网申状态与英语要求待核，班费记录列为可迁移经验。](docs/images/job-check.png)
+
+### 02 · 把真实经历写进投递包
+
+简历沿用班费记录和公示这两项已知事实。投递包展示哪些措辞有证据、哪些字段还要补，并给出可练的追问。 [打开完整示例](examples/application.md)
+
+![可编辑简历片段与面试追问，包含评分要点和红线。](docs/images/application-packet.png)
+
+### 03 · 找到下周最值得练的一关
+
+这六条模拟记录中，笔试有三个已确认结果，一个通过。另有一条仍待反馈、一条主动退出，均单独计数。Skill 给出的行动是用已确认的题型做一套限时题，再按错因复盘。 [查看漏斗使用说明](references/application-log.md#找到最弱的一关)
+
+![六条模拟投递的结果。投递环节四条通过、一条待反馈、一条退出。笔试一条通过、两条未通过。面试两条通过。](docs/images/v1.3.0-funnel.png)
+
+<details>
+<summary>继续看面试练习、岗位实操和跨会话记录</summary>
+
+**面试复练**。同一道题答两次，用同一套标准比较动作、证据和表达。
+
+![两轮模拟面试的评分对比。](docs/images/interview-practice.png)
+
+**岗位实操**。从费用台账中找出金额不符、缺凭证和重复凭证。
+
+![综合职能实操，使用五条模拟费用记录。](docs/images/work-sample.png)
+
+**跨会话继续**。告诉 Agent 原来的本地数据库路径，读回上次的阶段、简历版本和下一步。旧 SQLite 记录在追加前可按[迁移说明](references/application-log.md)备份升级。
+
+![从本地投递库恢复的面试阶段、简历版本、日期和下一步。](docs/images/local-log.png)
+
+</details>
+
+## 可以直接复制的提问
+
+- **排求职季**。我想走暑期留用和正式秋招两条线，用我的毕业年月和意向城市排出本月需要核验的窗口。
+- **准备投递包**。按这份 JD 和我的经历写一份可编辑的投递包，把资格待核项和需要本人确认的字段列出来。
+- **复盘投递**。用我指定的本地投递库看近 28 天，区分待反馈和明确未通过，给我下周一个优先动作。
+
+如果希望下次接着聊，可以在选定的私人目录创建[本地求职档案](references/candidate-profile.md)，以后给 Agent 同一个路径。
 
 ```bash
 python3 scripts/candidate_profile.py 我的求职档案.local.json init
 ```
-
-## 走完一次模拟投递
-
-下面用一份综合职能岗 JD 和一段班委经历演示。岗位、候选人、评分和投递记录都来自模拟测试。
-
-### 先判断要不要投
-
-候选人符合已给出的届次和学历要求，六级或同等外语证明待确认，网申也未核实。若官网和网申页确认岗位开放，且能提供符合公告的外语证明和其他硬性资格，可以投。任一条件不成立时跳过，仍待核时只备料。
-
-![岗位判断示例。网申状态与英语要求待核，班费记录列为可迁移经验](docs/images/job-check.png)
-
-### 给一版可编辑的投递包
-
-简历沿用班费记录和公示这两个已知事实。完整投递包附网申字段稿、改写依据、投递前检查和三道带评分要点的追问。可直接打开[完整示例笔记](examples/application.md)。
-
-![简历片段与一题追问的评分要点及红线](docs/images/application-packet.png)
-
-### 同题练两轮
-
-先回答，再沿本人动作和证据追问。第二轮按同一量表给反馈，能看出回答具体在哪一项有变化。图中的分数仅对应两份模拟回答。
-
-![结构化面试的两轮练习评分，包含相关性、本人动作、证据与表达](docs/images/interview-practice.png)
-
-### 做一次岗位实操
-
-试着核对五笔费用，找出金额不符、缺凭证和重复凭证。提交后按评分表反馈。运营、人力行政方向也各有一题。
-
-![综合职能实操题。台账包含五条申请及各自的金额和凭证](docs/images/work-sample.png)
-
-### 下次继续同一份准备
-
-在新对话指定原来的本地数据库，就能读回岗位阶段、简历版本和下一步。运行 `funnel` 可以看到哪一关的已确认转化最低。比如 32 份投递都还在等回复时，转化率显示暂无，下周先查最多三份提交回执与官方状态。
-
-![重新读取本地投递记录后显示面试阶段、简历版本、截止日期和待办](docs/images/local-log.png)
-
-## 可以这样说
-
-| 目标 | 给 Agent 的话 |
-| --- | --- |
-| 排求职季节奏 | 我想走暑期留用和正式秋招两条线。用我的档案排出本月该核哪些窗口、选哪些渠道。 |
-| 查现在还能投的 | 我 2027 年 6 月毕业，上海或杭州，想找内容运营和市场校招。只列你刚刚核验过官网与投递页的岗位。 |
-| 清理旧表 | 帮我把这份秋招表分成当前可投、未开始、明确结束和待核。只在结果表排除失效记录，保留我的原文件。 |
-| 判断值不值得投 | 这两个岗位帮我排一下。分开写硬性条件、优先项和本人经历。缺什么信息就告诉我先核哪一条。 |
-| 做一份投递包 | 这是一份 JD 和我的两段经历。给我一版能编辑的简历、每条改写依据、附件检查和三道追问。 |
-| 笔试练习 | 帮我按当期银行笔试通知做一次限时练习，结束后按知识、审题和时间复盘。 |
-| 模拟面试 | 我想投银行综合岗。一次问一题，根据我的回答追问。用同一套标准给我两轮练习反馈。 |
-| 做岗位实操 | 给我一道人力行政排期题，等我交卷再逐项评分。 |
-| 比较 Offer 和签三方 | 我在比较两份 Offer。按到手成本、成长、城市和签约条件拆开，给我向 HR 核对的问题。 |
-| 诊断投递漏斗 | 查我近 28 天的投递，区分没回音、主动退出和已确认未通过，只给下周一个实验。 |
-| 继续上次投递 | 读取我选的本地投递记录，找出本周最早到期的行动，按实际反馈帮我复盘。 |
 
 ## 内容
 
