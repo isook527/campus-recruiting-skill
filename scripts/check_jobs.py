@@ -74,8 +74,17 @@ def identity(row):
 
 
 def check_record(row, now):
-    if not isinstance(row, dict) or set(row) != FIELDS:
-        raise ValueError("record must contain exactly the documented fields")
+    if not isinstance(row, dict):
+        raise ValueError("expected a JSON object for this record")
+    if set(row) != FIELDS:
+        problems = []
+        missing = sorted(FIELDS - row.keys())
+        unexpected = sorted(row.keys() - FIELDS)
+        if missing:
+            problems.append("missing fields " + ", ".join(missing))
+        if unexpected:
+            problems.append("unexpected fields " + ", ".join(unexpected))
+        raise ValueError(". ".join(problems) + ". See references/job-verification.md.")
     for key in ("id", "employer", "title", "batch"):
         if not isinstance(row[key], str) or not row[key].strip():
             raise ValueError(f"{key} is required")
@@ -84,8 +93,9 @@ def check_record(row, now):
             raise ValueError(f"{key} must be null or nonblank text")
     if row["scope"] not in ("position", "campaign"):
         raise ValueError("invalid scope")
-    if row["status"] not in STATUSES or row["employment_type"] not in TYPES:
-        raise ValueError("invalid status or employment_type")
+    for key, allowed in (("status", STATUSES), ("employment_type", TYPES)):
+        if not isinstance(row[key], str) or row[key] not in allowed:
+            raise ValueError(f"invalid {key}. Use one of {', '.join(sorted(allowed))}.")
 
     for key in ("announcement_url", "application_url"):
         check_url(row[key], key)
@@ -128,8 +138,15 @@ def audit(records, now):
     eligible, excluded = [], []
     groups = {}
     record_ids = set()
-    for row in records:
-        result = check_record(row, now)
+    for index, row in enumerate(records, 1):
+        record_id = row.get("id") if isinstance(row, dict) else None
+        location = f"record {index}"
+        if isinstance(record_id, str) and record_id:
+            location += f" ({record_id!r})"
+        try:
+            result = check_record(row, now)
+        except (ValueError, TypeError) as error:
+            raise ValueError(f"{location}. {error}") from error
         if row["id"] in record_ids:
             raise ValueError(f"duplicate id: {row['id']}")
         record_ids.add(row["id"])

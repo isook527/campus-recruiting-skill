@@ -45,7 +45,11 @@ def evidence_ids(ids, facts):
 def index_reviews(data):
     facts = data["facts"]
     if not isinstance(facts, dict):
-        raise ValueError("facts 须为事实编号到已确认事实的字典")
+        raise ValueError(
+            'facts 需要以事实编号为键的 JSON 对象。示例 '
+            '{"F1": {"text": "负责班费记录", "provenance": "user_confirmed"}}。'
+            '完整字段见 references/application-packet.md 的「生成 Markdown 和排序」。'
+        )
     for key, fact in facts.items():
         if not filled(key) or not isinstance(fact, dict) or not filled(fact.get("text")):
             raise ValueError("每条事实须有编号和已确认内容")

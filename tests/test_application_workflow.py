@@ -94,6 +94,11 @@ class ApplicationPacketTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "未提供资料"):
             rank(self.data, NOW)
 
+    def test_facts_array_error_shows_expected_shape_and_documentation(self):
+        self.data["facts"] = []
+        with self.assertRaisesRegex(ValueError, r'facts.*"F1".*user_confirmed.*references/application-packet.md'):
+            rank(self.data, NOW)
+
     def test_transferable_experience_cannot_satisfy_hard_requirement(self):
         self.data["reviews"][0]["criteria"][0]["evidence_type"] = "transferable"
         with self.assertRaisesRegex(ValueError, "硬性资格"):
@@ -145,6 +150,23 @@ def event(event_id, stage, at, **updates):
 
 
 class LocalLogTest(unittest.TestCase):
+    def test_record_help_and_inline_json_error_explain_file_path(self):
+        with tempfile.TemporaryDirectory() as directory:
+            db = Path(directory) / "applications.sqlite3"
+            command = [sys.executable, str(ROOT / "scripts/application_log.py"), str(db), "record"]
+            help_text = subprocess.run(
+                [*command, "--help"], check=True, capture_output=True, text=True,
+            ).stdout
+            self.assertIn("EVENT_JSON_PATH", help_text)
+            self.assertIn("event.json", help_text)
+            result = subprocess.run(
+                [*command, '{"note":"demo sentinel"}'], capture_output=True, text=True,
+            )
+            self.assertEqual(result.returncode, 2)
+            self.assertIn("事件 JSON 文件路径", result.stderr)
+            self.assertNotIn("demo sentinel", result.stderr)
+            self.assertFalse(db.exists())
+
     def test_reopens_in_new_process_and_idempotent_concurrent_records(self):
         with tempfile.TemporaryDirectory() as directory:
             base = Path(directory)

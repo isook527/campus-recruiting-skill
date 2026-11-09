@@ -12,6 +12,8 @@ python3 scripts/application_log.py local/campus-applications.sqlite3 review --jo
 
 数据库父目录须已存在。首次记录时创建数据库。无需额外软件依赖，使用 Python 3.9+ 标准库。程序只在本地处理记录。已有 Markdown 或 CSV 可以继续使用[手动表](../templates/local-tracking.md)，或在用户同意后按时间顺序导入已确认事件。用同一文件跨会话使用，即使岗位名称相近也保留招聘方、批次或城市可区分的稳定 ID。
 
+先把事件写入一个 JSON 文件，例如 `事件.json`，再把文件路径作为 `record` 的参数。带空格的路径用引号包住。
+
 每份事件 JSON 包含这些字段：
 
 | 字段 | 写法 |

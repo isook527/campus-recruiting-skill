@@ -2,13 +2,53 @@
 
 给非技术岗应届求职者用的免费开源 Skill。它在 Agent 对话里完成岗位核验、筛选、简历改写、面试练习和投递跟踪。所有材料随源码开放，无需付费、激活或登录专用工作台。
 
-发一个岗位链接和一到两段真实经历，即可开始准备一份针对该岗位的投递包。
+发一个岗位链接和一到两段真实经历，即可开始准备一份针对该岗位的投递包。适合运营市场、银行与综合职能、人力行政和项目支持等方向。
 
-## 安装
+[下载 v1.1.1 测试版 ZIP](https://github.com/isook527/campus-recruiting-skill/releases/download/v1.1.1/campus-recruiting-skill-v1.1.1.zip) · [版本记录](https://github.com/isook527/campus-recruiting-skill/releases)
 
-下载仓库 ZIP 或克隆仓库，把整个 `campus-recruiting-skill` 目录放到 Agent 的本地 Skill 目录。Codex 使用 `~/.codex/skills/`，Claude Code 使用 `~/.claude/skills/`。若解压目录带分支后缀，改名为 `campus-recruiting-skill`，确认该目录下直接包含 `SKILL.md`，然后重新打开 Agent。
+## 三步开始
 
-在对话中使用 `$campus-recruiting-skill` 或明确让 Agent 按 [SKILL.md](SKILL.md) 处理。实时岗位核验使用 Agent 已有的网页工具。结构化批量校验用 Python 3.9+ 标准库。简历、案例、面试和行动模板可离线阅读。
+1. 下载上方 ZIP 并解压，确认 `campus-recruiting-skill/` 下面直接包含 `SKILL.md`。从 Git 克隆的读者可以使用默认分支。
+2. 把整个文件夹放进对应的 Skills 目录。Codex 使用 `~/.codex/skills/`，Claude Code 使用 `~/.claude/skills/`。装过旧版时，先备份旧 Skill 目录，再替换整份文件夹。个人投递记录放在单独的本地目录。
+3. 重新打开工具。在 Codex 对话输入 `$campus-recruiting-skill`。也可以直接让 Agent 读取 [SKILL.md](SKILL.md) 并按里面的流程处理。询问已安装版本时，Skill 会读取 `metadata.version`。
+
+> 这是我的岗位说明和两段真实经历。帮我核对硬性资格，做一份可编辑简历、改写依据、附件检查和三道追问。
+
+实时岗位核验使用 Agent 已有的网页工具。只贴出 JD 时也可以先准备简历，网申状态保持待核。批量校验和本地投递记录使用 Python 3.9+ 标准库。
+
+## 走完一次模拟投递
+
+下面用一份综合职能岗 JD 和一段班委经历演示。岗位、候选人、评分和投递记录都来自模拟测试。
+
+### 先判断要不要投
+
+候选人符合已给出的届次和学历要求，六级或同等外语证明待确认，网申也未核实。结果停在「补核后再决定」。岗位偏好和硬性资格各自列出。
+
+![岗位判断示例。网申状态与英语要求待核，班费记录列为可迁移经验](docs/images/job-check.png)
+
+### 给一版可编辑的投递包
+
+简历沿用班费记录和公示这两个已知事实。完整投递包附每条改写依据、投递前检查和三道面试追问。
+
+![简历片段与从本版简历生成的三道面试追问](docs/images/application-packet.png)
+
+### 同题练两轮
+
+先回答，再沿本人动作和证据追问。第二轮按同一量表给反馈，能看出回答具体在哪一项有变化。图中的分数仅对应两份模拟回答。
+
+![结构化面试的两轮练习评分，包含相关性、本人动作、证据与表达](docs/images/interview-practice.png)
+
+### 做一次岗位实操
+
+试着核对五笔费用，找出金额不符、缺凭证和重复凭证。提交后按评分表反馈。运营、人力行政方向也各有一题。
+
+![综合职能实操题。台账包含五条申请及各自的金额和凭证](docs/images/work-sample.png)
+
+### 下次继续同一份准备
+
+在新对话指定原来的本地数据库，就能读回岗位阶段、简历版本和下一步。没有收到的反馈保持空缺。
+
+![重新读取本地投递记录后显示面试阶段、简历版本、截止日期和待办](docs/images/local-log.png)
 
 ## 可以这样说
 
@@ -34,5 +74,7 @@
 实时机会每次重新查验。来源导航只用于起步，历史线索、已经关闭的公告和待核岗位不混入实时结果。招聘方原文与站点遵循各自权利，仓库整理的是自有案例、模板、核验方法和必要链接。
 
 维护时运行 `python3 -m unittest discover -s tests -v`。测试覆盖岗位核验、投递包的事实引用、跨进程恢复和重复写入。个人记录保存在用户选定的本地文件中。
+
+命令行写入投递记录时，先把事件写进 JSON 文件，再运行 `python3 scripts/application_log.py 本地记录.sqlite3 record 事件.json`。可用 `record --help` 查看参数。岗位校验和投递包输入格式可查[岗位字段](references/job-verification.md#结构化核验记录)和[事实字段](references/application-packet.md#生成-markdown-和排序)。
 
 本仓库的自有内容和代码按 [MIT License](LICENSE) 提供。

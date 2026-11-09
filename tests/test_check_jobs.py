@@ -69,6 +69,16 @@ class CheckJobsTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "tracking"):
             audit([example(application_url="https://example.org/apply?token=sample")], NOW)
 
+    def test_schema_error_identifies_record_and_fields(self):
+        broken = example(id="second", job_type="campus")
+        del broken["city"]
+        with self.assertRaisesRegex(ValueError, r"record 2 .*second.*missing fields city.*unexpected fields job_type"):
+            audit([example(), broken], NOW)
+
+    def test_invalid_status_lists_accepted_values(self):
+        with self.assertRaisesRegex(ValueError, r"record 1 .*invalid status.*closed.*unverified.*verified_open"):
+            audit([example(status="open")], NOW)
+
     def test_duplicate_and_conflicting_status_do_not_leak_into_open_list(self):
         result = audit([example(), example(id="demo-002", status="closed")], NOW)
         self.assertEqual(result["eligible_by_record"], [])

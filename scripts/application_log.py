@@ -162,8 +162,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("database", type=Path)
     commands = parser.add_subparsers(dest="command", required=True)
-    add = commands.add_parser("record")
-    add.add_argument("event", type=Path)
+    add = commands.add_parser("record", help="从 JSON 文件记录一个已确认的投递事件")
+    add.add_argument("event", metavar="EVENT_JSON_PATH", type=Path, help="事件 JSON 文件路径，例如 event.json")
     read = commands.add_parser("review")
     read.add_argument("--since", type=date.fromisoformat, help="Review starting on this Beijing date")
     read.add_argument("--job", help="Include all recorded events for this job ID")
@@ -171,7 +171,14 @@ def main():
     now = datetime.now(CHINA)
     try:
         if args.command == "record":
-            event = json.loads(args.event.read_text(encoding="utf-8"))
+            try:
+                event_text = args.event.read_text(encoding="utf-8")
+            except OSError as error:
+                raise ValueError(
+                    "record 需要一个可读取的事件 JSON 文件路径。"
+                    "请先把事件写到 event.json，再把文件路径传给 record。"
+                ) from error
+            event = json.loads(event_text)
             result = {"recorded": record(args.database, event, now), "event_id": event["event_id"]}
         else:
             start = args.since or now.date() - timedelta(days=6)
