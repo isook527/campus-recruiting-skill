@@ -54,4 +54,3 @@ After scoring both answers, record:
 
 Do not use answer length alone as a preference signal. Do not reward a polished phrase that
 weakens evidence fidelity. Keep all four dimension scores even if a compliance flag appears.
-
