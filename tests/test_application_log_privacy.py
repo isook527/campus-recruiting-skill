@@ -28,6 +28,7 @@ from check_jobs import CHINA  # noqa: E402
 
 NOW = datetime(2030, 11, 9, 16, 0, tzinfo=CHINA)
 MOBILE = "+86 138-0013-8000"
+# GB 11643-1999 标准示例号码，非真实个人信息
 CHINESE_ID = "11010519491231002X"
 MALFORMED_ID = "ID=11010519991340123X"
 FULLWIDTH_PRIVATE = "card-１１０１０５１９９９１３４０１２３Ｘ"

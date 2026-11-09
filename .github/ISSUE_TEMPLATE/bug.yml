@@ -1,0 +1,27 @@
+name: 错误报告
+description: 报告 Skill、文档或脚本的可复现错误
+body:
+  - type: markdown
+    attributes:
+      value: 请勿填写个人信息或粘贴真实投递记录。隐私或安全问题请用 SECURITY.md 中的私密报告入口。
+  - type: input
+    id: version
+    attributes:
+      label: 版本与环境
+      placeholder: v1.3.0，Python 3.13，操作系统
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 复现步骤
+      description: 请使用合成输入。
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: 实际结果和预期结果
+      description: 可附已脱敏的报错或截图。
+    validations:
+      required: true

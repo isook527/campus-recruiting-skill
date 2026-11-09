@@ -2,6 +2,8 @@
 
 给非技术岗应届求职者用的免费开源 Skill。它在 Agent 对话里用一份本地档案做求职季规划、岗位核验、简历和网申准备、笔面试练习、Offer 比较与投递漏斗诊断。所有材料随源码开放，无需付费、激活或登录专用工作台。
 
+**What it is.** An open-source agent skill for planning, applying to, and tracking campus recruitment in China. **Who it’s for.** Students and recent graduates targeting non-technical roles. **Install.** Download and unzip a release, then place the `campus-recruiting-skill` folder in your agent’s Skills directory.
+
 发一个岗位链接和一到两段真实经历，即可开始准备一份针对该岗位的投递包。适合运营市场、银行与综合职能、人力行政和项目支持等方向。
 
 [GitHub 下载与校验文件](https://github.com/isook527/campus-recruiting-skill/releases) · [版本记录](CHANGELOG.md)
@@ -85,6 +87,17 @@ python3 scripts/candidate_profile.py 我的求职档案.local.json init
 - [笔试与测评](references/assessments.md) · [公司调研卡](references/company-research.md) · [Offer 比较](references/offer-decision.md) · [签约、背调与体检](references/signing.md)
 - [本地投递记录和每周复盘](references/application-log.md) · [行为回归](evals/README.md) · [简历质量盲评](evals/quality/README.md)
 
+## 评估现状
+
+- 简历质量盲评共 9 对，v1.3.0 为 **4 胜、4 平、1 负**。评估使用 3 个合成案例和 1 名模型评审。
+- 22 条行为用例进行了 3 轮短答压力测试，共 66 次。**20/66** 满足全部必需项，**65/66** 无禁止项。
+
+见[原始评估记录](evals/quality/results-v1.3.0.md)。
+
+## 声明
+
+本项目为非官方开源项目，与文中引用的任何招聘方、平台或机构无隶属或合作关系。所引名称和商标归各自权利人。内容不构成法律、劳动或职业咨询意见。签约等事项以书面文件和专业意见为准。
+
 ## 适用范围
 
 适用于中国校园招聘中的非技术岗。国考、省考、选调和事业单位公开招聘按对应主管机关的当期公告查询。实时机会每次重新查验。来源导航只用于起步，历史线索、已经关闭的公告和待核岗位不混入实时结果。招聘方原文与站点遵循各自权利，仓库整理的是自有案例、模板、核验方法和必要链接。
@@ -93,9 +106,11 @@ python3 scripts/candidate_profile.py 我的求职档案.local.json init
 
 ## 自检
 
-维护时运行 `python3 -m unittest discover -s tests -v`。测试覆盖岗位核验、投递包的事实引用、跨进程恢复和重复写入。个人记录保存在用户选定的本地文件中。运行 `python3 scripts/check_sources.py` 可查看哪些导航入口需重新核对。
+维护时运行 `python3 -m unittest discover -s tests -v`。测试覆盖岗位核验、投递包的事实引用、跨进程恢复和重复写入。个人记录保存在用户选定的本地文件中。运行 `python3 scripts/check_sources.py` 可查看哪些导航入口和带核验日期的参考链接需重新核对。
 
 命令行写入投递记录时，先把事件写进 JSON 文件，再运行 `python3 scripts/application_log.py 本地记录.sqlite3 record 事件.json`。可用 `record --help` 查看参数。岗位校验和投递包输入格式可查[岗位字段](references/job-verification.md#结构化核验记录)和[事实字段](references/application-packet.md#生成-markdown-和排序)。
+
+运行 `python3 scripts/release.py` 可核对版本，并在 `dist/` 生成 ZIP 和 `SHA256SUMS`。
 
 发布资产旁提供 SHA-256 校验文件。下载两份文件到同一目录后，可用 `shasum -a 256 -c SHA256SUMS` 校验。
 

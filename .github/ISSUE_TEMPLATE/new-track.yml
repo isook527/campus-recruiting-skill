@@ -1,0 +1,23 @@
+name: 建议新增赛道
+description: 建议补充一个校招行业或岗位方向
+body:
+  - type: markdown
+    attributes:
+      value: 请勿填写个人信息。示例仅使用合成案例和虚构人物。
+  - type: input
+    id: track
+    attributes:
+      label: 赛道和代表性岗位
+    validations:
+      required: true
+  - type: textarea
+    id: workflow
+    attributes:
+      label: 现有内容缺少的流程或决策
+    validations:
+      required: true
+  - type: textarea
+    id: sources
+    attributes:
+      label: 官方资料和核验时间
+      description: 每条链接附 YYYY-MM-DD。可附合成案例。

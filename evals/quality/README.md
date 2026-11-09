@@ -1,39 +1,23 @@
-# Resume quality A/B evaluation
+# 简历质量盲评
 
-This suite complements, and does not replace, the compliance cases in `evals/cases.json`.
-It compares the quality of targeted Chinese campus-recruiting resumes while holding the
-JD, candidate facts, prompt, and run count constant across both arms.
+本套用例与 `evals/cases.json` 中的合规用例分别运行。比较两版生成的中文校招简历时，使用相同的 JD、候选人事实、提示词和生成次数。
 
-## Fixed design
+## 固定设计
 
-- Three synthetic cases: `Q01` comprehensive functions, `Q02` content operations,
-  and `Q03` HR/project support.
-- Three independent attempts per case and per arm.
-- Canonical input is the exact `prompt` string in `cases.json`. Do not paraphrase it.
-- Output filenames are `q01-r01.md` through `q03-r03.md`.
-- Raw arm directories are outside the repository, for example:
-  - `work/v130-eval/baseline/`
-  - `work/v130-eval/candidate/`
-- An output must contain only the answer to the prompt. Do not add model, version,
-  arm, commit, run, or evaluator labels inside the file.
+- 使用三个合成案例。`Q01` 为综合职能，`Q02` 为内容运营，`Q03` 为人力与项目支持。
+- 每个案例、每个版本独立生成三次。
+- 直接使用 `cases.json` 里的 `prompt` 原文。
+- 产物文件名为 `q01-r01.md` 至 `q03-r03.md`。
+- 原始稿件保存在仓库外，例如 `work/v130-eval/baseline/` 和 `work/v130-eval/candidate/`。
+- 每份文件只保存请求的回答。模型、版本、组别、提交号、轮次和评审身份不写进稿件。
 
-## Generate each arm
+## 生成两组稿件
 
-For every case, start three fresh attempts with no prior attempt in context. Give each
-attempt the same canonical prompt and only the Skill/reference files belonging to that
-arm. Do not ask one attempt to imitate or revise another. Preserve raw output exactly;
-normalization is limited to ensuring UTF-8 text and one trailing newline.
+每次新开会话，仅提供同一份提示词与该版本的 Skill 和参考资料。会话不继承上一轮稿件。原稿保持 UTF-8 文本和一个结尾换行，不做内容改写。
 
-If an automated runner is unavailable or would incur unapproved cost, three separately
-authored attempts are acceptable. Record the real method in an arm-local `RUN-NOTES.md`
-outside the nine scored files. Never describe manually authored attempts as independent
-model calls.
+自动运行器不可用或会产生未获授权的费用时，可以分别人工撰写三次。在评分稿件之外的 `RUN-NOTES.md` 记录实际方法，并注明是人工稿件。
 
-The bundled runner uses three fresh ephemeral Codex processes in a neutral temporary
-directory, one grouped three-case round per process, and applies the same low reasoning
-effort to both arms. Existing host rules remain loaded; the evaluation prompt still
-prohibits tools and the sandbox is read-only. The runner pins `gpt-6.1-sol` unless an
-explicit identical `--model` is supplied to both arms:
+自带运行器在中立的临时目录启动三个只读 Codex 进程。每个进程各生成三例，使用相同的低推理强度。运行器保留主机规则，评估提示禁止调用工具。默认模型为 `gpt-6.1-sol`。指定 `--model` 时，两组使用相同的值。
 
 ```bash
 python3 evals/quality/run_arm.py \
@@ -49,13 +33,11 @@ python3 evals/quality/run_arm.py \
   --out ../v130-eval/candidate
 ```
 
-Run each command from the repository root. The baseline ref is the frozen v1.2.0 source;
-run the candidate command only after its rules are ready. `RUN-NOTES.json` is audit metadata
-and is excluded from scoring.
+以上命令从仓库根目录运行。`c6e1de9` 是冻结的 v1.2.0 源码。候选规则确定后再运行第二条命令。`RUN-NOTES.json` 保存审计信息，评分时排除。
 
-## Blind and score
+## 盲化与评分
 
-After both arms contain nine files, create a blind package with:
+两组各有九份稿件后，运行以下命令生成匿名配对。
 
 ```bash
 python3 evals/quality/blind_pairs.py \
@@ -66,11 +48,9 @@ python3 evals/quality/blind_pairs.py \
   --seed-file ../v130-eval/private/seed.txt
 ```
 
-Paths above are examples; use explicit paths appropriate to the checkout. Give graders
-only `blinded/`, `rubric.md`, and the case prompts. Keep the seed and answer key private
-until all grades and written rationales are frozen.
+按实际检出位置调整示例路径。评审只收到 `blinded/`、`rubric.md` 和案例题面。评分和文字理由冻结后，再用私下保存的随机种子及映射揭晓组别。
 
-## Audit before grading
+## 评分前审计
 
 ```bash
 python3 evals/quality/audit_outputs.py \
@@ -82,9 +62,6 @@ python3 evals/quality/audit_outputs.py \
   --arm ../v130-eval/candidate
 ```
 
-The audit checks filenames, run counts, empty files, accidental arm labels, and exact
-duplicate attempts. It does not score quality or verify facts; graders must use
-`rubric.md` and the structured facts in `cases.json`.
+审计检查文件名、轮次数量、空文件和组别泄漏，并标记完全重复的稿件。质量和事实由评审对照 `rubric.md` 及 `cases.json` 的事实字段判定。
 
-For a complete release check, retain and run the existing compliance cases and test
-suite separately. A quality win never overrides a compliance regression.
+发布检查还应单独运行合规用例和单元测试。质量盲评的优势不能抵消合规退步。

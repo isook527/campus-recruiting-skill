@@ -11,3 +11,4 @@ local/
 *.sqlite-*
 *.db
 *.db-*
+dist/

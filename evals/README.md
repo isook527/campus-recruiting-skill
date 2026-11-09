@@ -30,4 +30,4 @@ python3 scripts/check_sources.py
 python3 scripts/prepare_application.py examples/application.json --as-of 2026-11-09T16:00:00+08:00 --job synthetic-general-beijing-2027
 ```
 
-脚本测试与行为评估分别报告。历史回放用于复现示例，其中的时间不代表当前招聘状态。详见[版本比较](results.md)。
+脚本测试与行为评估分别报告。历史回放用于复现示例，其中的时间不代表当前招聘状态。详见[历史版本比较](results.md)和[最新 v1.3.0 评估记录](quality/results-v1.3.0.md)。

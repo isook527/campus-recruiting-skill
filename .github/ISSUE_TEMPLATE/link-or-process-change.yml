@@ -1,0 +1,39 @@
+name: 链接或流程变更
+description: 报告招聘入口、官方公告或流程变化
+body:
+  - type: markdown
+    attributes:
+      value: 请勿填写个人信息、登录凭证或带个人标识的链接。截图请先脱敏。
+  - type: input
+    id: organization
+    attributes:
+      label: 机构
+    validations:
+      required: true
+  - type: input
+    id: original-link
+    attributes:
+      label: 原链接
+    validations:
+      required: true
+  - type: input
+    id: new-link
+    attributes:
+      label: 新链接
+      description: 流程变更但链接未变时可填写原链接。未找到新入口时写「待核」。
+    validations:
+      required: true
+  - type: input
+    id: observed-date
+    attributes:
+      label: 发现日期
+      placeholder: YYYY-MM-DD
+    validations:
+      required: true
+  - type: textarea
+    id: change
+    attributes:
+      label: 变更说明
+      description: 说明观察到的变化，可附脱敏截图。
+    validations:
+      required: true
