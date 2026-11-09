@@ -129,6 +129,13 @@ class ApplicationPacketTest(unittest.TestCase):
         self.assertIn("cv-support-01", packet)
         self.assertEqual(packet.count("（F2）"), 3)
 
+    def test_readme_packet_replays_from_the_published_fixture(self):
+        data = json.loads((ROOT / "examples/application.json").read_text(encoding="utf-8"))
+        now = datetime.fromisoformat("2026-11-09T16:00:00+08:00")
+        packet = render_packet(data, rank(data, now), "synthetic-general-beijing-2027", replay=True)
+        example = (ROOT / "examples/application.md").read_text(encoding="utf-8")
+        self.assertEqual(example.split("\n\n", 1)[1], packet)
+
     def test_hard_gap_stops_packet_even_when_resume_is_present(self):
         self.data["reviews"][0] = application("demo-001", state="gap")
         with self.assertRaisesRegex(ValueError, "停止生成定制投递包"):
@@ -165,7 +172,7 @@ class ApplicationPacketTest(unittest.TestCase):
              "fact_ids": [], "text": None},
         ]
         packet = render_packet(self.data, rank(self.data, NOW), "demo-001")
-        self.assertIn("均已确认，可投。任一不成立则不投", packet)
+        self.assertIn("全部硬门槛核实且满足，可投。任一不成立则不投", packet)
         self.assertEqual(next(line for line in packet.splitlines() if line.startswith("| 要求")).count("|"), 5)
         self.assertIn("## 软匹配", packet)
         self.assertIn("超出记录的字符上限", packet)

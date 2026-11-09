@@ -188,9 +188,16 @@ def audit(records, now):
         else:
             excluded.append({"id": row["id"], "reason": result})
     deadlines = {row["id"]: deadline_clock(row["deadline"], now) for row in records}
+    expiry = {}
+    eligible_ids = {row["id"] for row in eligible}
+    for row in records:
+        if row["id"] in eligible_ids:
+            checked = parse_datetime(row["checked_at"])
+            next_day = (checked + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+            expiry[row["id"]] = min(checked + MAX_AGE, next_day).isoformat()
     return {
         "as_of": now.isoformat(), "eligible_by_record": eligible, "excluded": excluded,
-        "deadline_countdown": deadlines,
+        "deadline_countdown": deadlines, "verification_window_ends_at": expiry,
         "warnings": [row for row in excluded if row["reason"] in WARNINGS],
     }
 

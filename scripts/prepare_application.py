@@ -237,12 +237,13 @@ def render_packet(data, ranked, job_id, replay=False):
     if replay or row["decision"] != "ready" or any(item["state"] != "done" for item in checklist):
         lines.append("**材料状态**　准备草稿，待核事项见下方清单。")
     if row["decision"] == "verify":
-        gates = ["具体岗位及入口仍有效", "全部硬门槛核实且满足"]
-        gates.extend(row["reasons"])
+        gates = ["官网与网申页确认该岗位仍开放", "全部硬门槛核实且满足"]
         if row["choice_pending"]:
             gates.append("本人已确认志愿与占用规则")
-        lines.append("**投递条件** 若" + "、".join(map(cell, gates))
-                     + "均已确认，可投。任一不成立则不投，待核期间只备料。")
+        lines.append("**投递条件** 若" + "，且".join(gates)
+                     + "，可投。任一不成立则不投，待核期间只备料。")
+        if row["reasons"]:
+            lines.append("**优先核对** " + "、".join(map(cell, row["reasons"])) + "。")
     if replay:
         lines.append("**历史回放**　当前开放状态仍需重新核验。")
     links = [

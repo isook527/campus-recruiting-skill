@@ -60,6 +60,8 @@ class CheckJobsTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "future"):
             audit([example(checked_at="2030-11-09T16:00:01+08:00")], NOW)
         self.assertEqual(self.reason(checked_at="2030-11-09T07:59:00+08:00"), "stale")
+        valid = audit([example(checked_at="2030-11-09T08:30:00+08:00")], NOW)
+        self.assertEqual(valid["verification_window_ends_at"]["demo-001"], "2030-11-09T16:30:00+08:00")
 
     def test_distinguishes_not_started_from_stale_observation(self):
         self.assertEqual(self.reason(opens_at="2030-11-10"), "not_started")

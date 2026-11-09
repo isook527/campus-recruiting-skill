@@ -15,7 +15,7 @@ metadata:
 
 ## 按任务读取资料
 
-- **找岗位、核岗位、清旧表**：读 [岗位核验](references/job-verification.md) 和 [官方入口](references/official-sources.md)。只把本次查到官网和投递证据的项目或岗位放进相应推荐区。用户要判断是否值得投或比较多个岗位时，继续使用[投递优先级](references/application-prioritization.md)，先判断硬门槛，再排本周行动。
+- **找岗位、核岗位、清旧表**：读 [岗位核验](references/job-verification.md) 和 [官方入口](references/official-sources.md)。读取入口时核对 `last_verified`，有 Python 时用 `python3 scripts/check_sources.py` 标出需复核的入口。只把本次查到官网和投递证据的项目或岗位放进相应推荐区。用户要判断是否值得投或比较多个岗位时，继续使用[投递优先级](references/application-prioritization.md)，先判断硬门槛，再排本周行动。
 - **准备一次投递**：先收一个具体岗位链接或 JD，加上一到两段本人经历。按[岗位判断与投递包](references/application-packet.md)核对硬门槛、整理经历事实，生成可编辑简历、网申表单字段稿、改写依据、附件清单和三道追问。确认硬门槛不满足就停止该岗位的定制。缺关键资料时先给带待核标记的草稿，只问会改变结论的缺口。无法联网时可以处理用户贴出的 JD，网申状态保持待核。
 - **从零开始**：读 [求职流程与行动](references/action-guide.md)。如果条件没给全，先用已知条件做一次宽搜索，再列会改变结果的毕业年月、城市和岗位方向。默认聚焦非技术岗，按秋招、春招、补录、实习分组。按[行业流程](references/industry-processes.md)核对当期流程和用人主体。
 - **改简历、整理证据、练自我介绍**：读 [简历与证据](references/resume-and-evidence.md)，选一个 [相似经历](references/cases/index.md) 和一个 [可编辑简历模板](templates/resume.md)。拆出 JD 的三项核心任务，再用事实卡匹配。给可直接修改的保守版，数字和结果仅在用户能说明依据时加入。
