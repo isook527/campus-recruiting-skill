@@ -1,6 +1,6 @@
 ---
 name: campus-recruiting-skill
-description: 面向中国校园招聘的非技术岗求职 Skill。用于按毕业时间、城市和方向实时查验秋招、补录或实习，核对招聘链接与截止时间，把真实经历转成简历、证据卡和面试练习，并整理本地投递行动。适用运营市场内容、央国企银行综合、人力行政项目支持等方向。
+description: 面向中国校园招聘的非技术岗求职 Skill。实时核验秋招、补录和实习，判断资格与投递顺序，用真实经历生成一岗一份投递包，进行评分式面试或岗位实操，并从本地投递记录继续。适用运营市场内容、央国企银行综合、人力行政项目支持等方向。
 ---
 
 # 秋招求职助手
@@ -9,11 +9,13 @@ description: 面向中国校园招聘的非技术岗求职 Skill。用于按毕�
 
 ## 按任务读取资料
 
-- **找岗位、核岗位、清旧表**：读 [岗位核验](references/job-verification.md) 和 [官方入口](references/official-sources.md)。只把本次查到官网和投递证据的项目或岗位放进相应推荐区。没有实时网页工具时，提供官方入口、核对步骤和离线练习。
+- **找岗位、核岗位、清旧表**：读 [岗位核验](references/job-verification.md) 和 [官方入口](references/official-sources.md)。只把本次查到官网和投递证据的项目或岗位放进相应推荐区。用户要判断是否值得投或比较多个岗位时，继续使用[岗位判断与投递包](references/application-packet.md)。
+- **准备一次投递**：先收一个具体岗位链接或 JD，加上一到两段本人经历。按[岗位判断与投递包](references/application-packet.md)核对硬门槛、整理经历事实、生成可编辑简历、逐条改写依据、附件清单和三道追问。缺关键资料时先给带待核标记的草稿，只问会改变结论的缺口。无法联网时可以处理用户贴出的 JD，网申状态保持待核。
 - **从零开始**：读 [求职流程与行动](references/action-guide.md)。如果条件没给全，先用已知条件做一次宽搜索，再列会改变结果的毕业年月、城市和岗位方向。默认聚焦非技术岗，按秋招、补录、实习分组。
 - **改简历、整理证据、练自我介绍**：读 [简历与证据](references/resume-and-evidence.md)，选一个 [相似经历](references/cases/index.md) 和一个 [可编辑简历模板](templates/resume.md)。拆出 JD 的三项核心任务，再用事实卡匹配。给可直接修改的保守版，数字和结果仅在用户能说明依据时加入。
-- **面试模拟**：读 [面试题与追问](references/interview.md)。按目标岗位选题，一次问一道，沿「本人动作 → 证据 → 结果与边界」追问，再给可练习的回答结构。
-- **投递前检查、识别风险**：读 [投递安全](references/application-safety.md)。以当期公告确认资格、附件、志愿数、截止时间和提交渠道。先把敏感字段留空，用 [本地记录表](templates/local-tracking.md) 管理岗位、简历和后续动作。
+- **面试模拟与复练**：读 [面试题与追问](references/interview.md) 和 [评分与复练](references/interview-coaching.md)。一次问一道，引用用户的回答说明各项评分，给一个最值得改的点。同题重答后用同一标准比较。
+- **岗位实操**：读 [实操题](references/practice.md)，只展示所选方向的题面和交付要求。用户提交后按[实操评分表](references/practice-grading.md)评分，指出具体错误和可重做的步骤。练习结果标为模拟作品。
+- **投递前检查、记录与复盘**：读 [投递安全](references/application-safety.md)。以当期公告确认资格、附件、志愿数、截止时间和提交渠道。用户要保存或跨会话继续时使用[本地投递记录](references/application-log.md)，从其选定的文件恢复岗位、简历版本和下一步。手动记录可以用[本地记录表](templates/local-tracking.md)。
 
 ## 岗位结果
 
