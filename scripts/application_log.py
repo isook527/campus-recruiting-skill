@@ -11,6 +11,7 @@ from contextlib import closing
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
+from application_funnel import diagnose
 from check_jobs import CHINA, DATE_ONLY, parse_boundary, parse_datetime
 
 
@@ -283,6 +284,16 @@ def review(path, now, start, job_id=None):
     }
 
 
+def funnel(path, now, start, job_ids=None):
+    with closing(_readonly_database(path)) as db:
+        db.execute("BEGIN")
+        _, history = _read_history(db, now=now)
+    if job_ids:
+        selected = {_safe_identifier(job_id) for job_id in job_ids}
+        history = [event for event in history if event["job_id"] in selected]
+    return diagnose(history, now, start)
+
+
 def _paths_are_same(source, destination):
     try:
         return source.resolve(strict=True) == destination.resolve(strict=False)
@@ -397,6 +408,9 @@ def main():
     read = commands.add_parser("review", help="读取安全的投递复盘")
     read.add_argument("--since", type=date.fromisoformat, help="Review starting on this Beijing date")
     read.add_argument("--job", help="Include all recorded events for this job ID")
+    funnel_command = commands.add_parser("funnel", help="按实际提交批次复盘各关转化与待反馈")
+    funnel_command.add_argument("--since", type=date.fromisoformat, help="提交队列起点（北京时间）")
+    funnel_command.add_argument("--job", action="append", help="只看指定岗位编号，可重复传入")
     migrate = commands.add_parser("migrate", help="备份后把 v1 数据库事务升级到 v2")
     migrate.add_argument("backup", metavar="BACKUP_SQLITE_PATH", type=Path)
     export = commands.add_parser("export", help="导出不含身份证号和手机号的 JSON 快照")
@@ -421,6 +435,11 @@ def main():
             if start > now.date():
                 raise ValueError("复盘起点不能在未来")
             result = review(args.database, now, start, job_id=args.job)
+        elif args.command == "funnel":
+            start = args.since or now.date() - timedelta(days=27)
+            if start > now.date():
+                raise ValueError("漏斗起点不能在未来")
+            result = funnel(args.database, now, start, job_ids=args.job)
         elif args.command == "migrate":
             changed, previous = migrate_database(args.database, args.backup)
             result = {

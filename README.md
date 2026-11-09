@@ -1,6 +1,6 @@
 # 秋招求职助手
 
-给非技术岗应届求职者用的免费开源 Skill。它在 Agent 对话里完成岗位核验、投递排序、简历与网申字段准备、笔面试练习、Offer 比较和投递跟踪。所有材料随源码开放，无需付费、激活或登录专用工作台。
+给非技术岗应届求职者用的免费开源 Skill。它在 Agent 对话里用一份本地档案做求职季规划、岗位核验、简历和网申准备、笔面试练习、Offer 比较与投递漏斗诊断。所有材料随源码开放，无需付费、激活或登录专用工作台。
 
 发一个岗位链接和一到两段真实经历，即可开始准备一份针对该岗位的投递包。适合运营市场、银行与综合职能、人力行政和项目支持等方向。
 
@@ -15,6 +15,14 @@
 > 这是我的岗位说明和两段真实经历。帮我核对硬性资格，做一份可编辑简历、改写依据、附件检查和三道追问。
 
 实时岗位核验使用 Agent 已有的网页工具。只贴出 JD 时也可以先准备简历，网申状态保持待核。批量校验和本地投递记录使用 Python 3.9+ 标准库。
+
+## 先保存一份求职档案
+
+告诉 Agent「在我选定的私人目录新建档案，记下我确认过的毕业年月、意向城市和经历编号」。以后在新对话指定同一份文件，可沿用事实与偏好。也可以直接用命令初始化。详见[共享求职档案](references/candidate-profile.md)。
+
+```bash
+python3 scripts/candidate_profile.py 我的求职档案.local.json init
+```
 
 ## 走完一次模拟投递
 
@@ -46,7 +54,7 @@
 
 ### 下次继续同一份准备
 
-在新对话指定原来的本地数据库，就能读回岗位阶段、简历版本和下一步。没有收到的反馈保持空缺。
+在新对话指定原来的本地数据库，就能读回岗位阶段、简历版本和下一步。运行 `funnel` 可以看到哪一关的已确认转化最低。比如 32 份投递都还在等回复时，转化率显示暂无，下周先查最多三份提交回执与官方状态。
 
 ![重新读取本地投递记录后显示面试阶段、简历版本、截止日期和待办](docs/images/local-log.png)
 
@@ -54,6 +62,7 @@
 
 | 目标 | 给 Agent 的话 |
 | --- | --- |
+| 排求职季节奏 | 我想走暑期留用和正式秋招两条线。用我的档案排出本月该核哪些窗口、选哪些渠道。 |
 | 查现在还能投的 | 我 2027 年 6 月毕业，上海或杭州，想找内容运营和市场校招。只列你刚刚核验过官网与投递页的岗位。 |
 | 清理旧表 | 帮我把这份秋招表分成当前可投、未开始、明确结束和待核。只在结果表排除失效记录，保留我的原文件。 |
 | 判断值不值得投 | 这两个岗位帮我排一下。分开写硬性条件、优先项和本人经历。缺什么信息就告诉我先核哪一条。 |
@@ -62,17 +71,19 @@
 | 模拟面试 | 我想投银行综合岗。一次问一题，根据我的回答追问。用同一套标准给我两轮练习反馈。 |
 | 做岗位实操 | 给我一道人力行政排期题，等我交卷再逐项评分。 |
 | 比较 Offer 和签三方 | 我在比较两份 Offer。按到手成本、成长、城市和签约条件拆开，给我向 HR 核对的问题。 |
+| 诊断投递漏斗 | 查我近 28 天的投递，区分没回音、主动退出和已确认未通过，只给下周一个实验。 |
 | 继续上次投递 | 读取我选的本地投递记录，找出本周最早到期的行动，按实际反馈帮我复盘。 |
 
 ## 内容
 
 - [查岗、核验与去重](references/job-verification.md) · [官方来源导航](references/official-sources.md)
-- [投递优先级](references/application-prioritization.md) · [投递包和网申字段稿](references/application-packet.md) · [互联网、央国企、银行与快消流程](references/industry-processes.md)
+- [全季节奏与渠道](references/season-and-channels.md) · [共享求职档案](references/candidate-profile.md) · [漏斗诊断](references/application-log.md#找到最弱的一关)
+- [投递优先级](references/application-prioritization.md) · [投递包和网申字段稿](references/application-packet.md) · [八类行业与赛道流程](references/industry-processes.md)
 - [七天求职行动](references/action-guide.md) · [投递前检查与防骗](references/application-safety.md) · [本地行动表](templates/local-tracking.md)
-- [12 个模拟经历案例](references/cases/index.md) · [简历证据卡、三份示范与一分钟自我介绍](references/resume-and-evidence.md) · [三类可编辑简历](templates/resume.md)
-- [20 道面试题与 12 条追问](references/interview.md) · [模拟面试评分](references/interview-coaching.md) · [三个方向的实操题](references/practice.md)
+- [模拟经历案例](references/cases/index.md) · [简历证据卡、三份示范与一分钟自我介绍](references/resume-and-evidence.md) · [三类可编辑简历](templates/resume.md)
+- [面试题与追问](references/interview.md) · [分行业与轮次题库](references/interview-question-bank.md) · [故事库和能力矩阵](references/story-matrix.md) · [模拟面试评分](references/interview-coaching.md) · [三个方向的实操题](references/practice.md)
 - [笔试与测评](references/assessments.md) · [公司调研卡](references/company-research.md) · [Offer 比较](references/offer-decision.md) · [签约、背调与体检](references/signing.md)
-- [本地投递记录和每周复盘](references/application-log.md) · [22 条评估用例](evals/README.md)
+- [本地投递记录和每周复盘](references/application-log.md) · [行为回归](evals/README.md) · [简历质量盲评](evals/quality/README.md)
 
 ## 适用范围
 
