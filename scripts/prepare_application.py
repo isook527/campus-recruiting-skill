@@ -124,6 +124,72 @@ def decision(status, review):
     return "ready"
 
 
+
+def deadline_notice(job, review, status, outcome, now):
+    deadline, date_only = parse_boundary(job["deadline"], end=True)
+    checked = status in {"verified_open", "campaign_open", "deadline_time_unconfirmed"}
+    label = "截止时间"
+    remaining = "等待官方公布"
+    at = "未公布"
+    if status == "official_conflict":
+        label, at, remaining = "截止待核 · 来源冲突", "以招聘方确认结果为准", "暂不计算倒计时"
+    elif deadline is None:
+        label = "滚动招聘 · 截止未公布" if review.get("rolling") else "截止未公布"
+    elif date_only:
+        days = (deadline.date() - now.date()).days
+        at = deadline.strftime("%Y-%m-%d") + "（具体时刻待核）"
+        label = "截止日待核"
+        remaining = f"距截止日 {days} 个日历日"
+        if days < 0:
+            label, remaining = "已过截止日", "从可投清单移除"
+        elif days == 0:
+            label, remaining = "今天截止 · 时刻待核", "先确认今天何时截止"
+    else:
+        at = deadline.strftime("%Y-%m-%d %H:%M")
+        if deadline.second or deadline.microsecond:
+            at = deadline.isoformat(timespec="microseconds" if deadline.microsecond else "seconds")
+        at += "（北京时间）"
+        seconds = (deadline - now).total_seconds()
+        if seconds <= 0:
+            label, remaining = "已截止", "从可投清单移除"
+        else:
+            minutes = int(seconds // 60)
+            hours, minutes = divmod(minutes, 60)
+            parts = []
+            if hours:
+                parts.append(f"{hours} 小时")
+            if minutes:
+                parts.append(f"{minutes} 分钟")
+            remaining = "还剩 " + " ".join(parts) if parts else "不足 1 分钟"
+            days = (deadline.date() - now.date()).days
+            if days == 0:
+                label = "今天截止"
+            elif seconds <= 24 * 3600:
+                label = "24 小时内截止"
+            elif days == 1:
+                label = "明天截止"
+            elif seconds <= 72 * 3600:
+                label = "3 天内截止"
+    if deadline is not None and status != "official_conflict" and not checked and outcome != "skip":
+        label = "截止待核 · 记录中的时间"
+        if deadline < now and (not date_only or deadline.date() < now.date()):
+            remaining = "记录所列时间已过，当前开放状态待核"
+        else:
+            remaining += "（按待核记录计算）"
+    action = "先核对官方岗位的截止和开放状态。"
+    if outcome == "skip":
+        action = "该岗位已排除，停止本岗定制。"
+    elif status == "official_conflict":
+        action = "保留冲突出处，向招聘方核清后再提交。"
+    elif checked and date_only:
+        action = "先核实具体截止时刻，再按资格判断准备投递。"
+    elif checked and outcome == "verify":
+        action = "先核清资格和志愿限制，满足后由本人提交。"
+    elif checked and deadline is not None:
+        action = "核对附件与志愿，在截止前由本人提交。"
+    return {"label": label, "at": at, "remaining": remaining,
+            "next_action": action, "as_of": now.isoformat()}
+
 def rank(data, now):
     checked = audit(data["jobs"], now)
     statuses = {row["id"]: row["status"] for row in checked["eligible_by_record"]}
@@ -140,14 +206,16 @@ def rank(data, now):
         direct_duties = sum(
             item["evidence_type"] == "direct" for item in matched
         )
+        outcome = decision(status, review)
         ranked.append({
             "id": job["id"], "employer": job["employer"], "title": job["title"],
-            "decision": decision(status, review), "verification": status,
+            "decision": outcome, "verification": status,
             "deadline": job["deadline"], "matched_duties": len(matched),
             "direct_duties": direct_duties,
             "tier": TIERS.get(review.get("tier"), "待分档"),
             "source_type": job.get("source_type"),
             "deadline_countdown": checked["deadline_countdown"][job["id"]],
+            "deadline_notice": deadline_notice(job, review, status, outcome, now),
             "rolling": review.get("rolling", False),
             "effort_minutes": review.get("effort_minutes"),
             "choice_mode": review.get("choice_mode"),
@@ -230,10 +298,20 @@ def render_packet(data, ranked, job_id, replay=False):
         if limit is not None and (type(limit) is not int or limit <= 0):
             raise ValueError("max_chars 须为正整数")
 
+    notice = row["deadline_notice"]
     lines = [
         f"# {cell(job['employer'])} · {cell(job['title'])}投递准备包", "",
+        f"> **{notice['label']}**",
+        ">",
+        f"> **截止** {notice['at']}",
+        ">",
+        f"> **剩余时间** {notice['remaining']}",
+        ">",
+        f"> **下一步** {notice['next_action']}",
+        "",
+        f"倒计时以 {notice['as_of']} 计算。最近核验记录为 {job['checked_at']}。",
+        "",
         f"**准备判断** {DECISIONS[row['decision']]}。{REASONS[row['verification']]}。",
-        f"**截止** {job['deadline'] or '未公布'}　**记录时间** {job['checked_at']}",
         f"**简历版本** `{version}`",
     ]
     if replay or row["decision"] != "ready" or any(item["state"] != "done" for item in checklist):
