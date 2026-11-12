@@ -1,14 +1,14 @@
 # 秋招求职助手
 
-![秋招求职助手 v1.3.0。从查岗位到投递复盘，面向中国校招非技术岗。](docs/images/v1.3.0-overview.png)
+![秋招求职助手 v1.3.1。从查岗位到投递复盘，面向中国校招非技术岗。](docs/images/v1.3.1-overview.png)
 
 面向中国校招非技术岗的开源 Skill，适合准备秋招、春招、补录或实习的同学。给它一个岗位说明和一到两段真实经历，就能先判断资格，再准备一份可编辑的投递材料。之后可以用同一份本地档案继续练笔面试、比较 Offer 和复盘投递。
 
-**[下载 v1.3.0 ZIP](https://github.com/isook527/campus-recruiting-skill/releases/download/v1.3.0/campus-recruiting-skill-v1.3.0.zip)** · [正式 Release 和校验文件](https://github.com/isook527/campus-recruiting-skill/releases/tag/v1.3.0) · [版本记录](CHANGELOG.md)
+**[下载 v1.3.1 ZIP](https://github.com/isook527/campus-recruiting-skill/releases/download/v1.3.1/campus-recruiting-skill-v1.3.1.zip)** · [正式 Release 和校验文件](https://github.com/isook527/campus-recruiting-skill/releases/tag/v1.3.1) · [版本记录](CHANGELOG.md)
 
 This open-source agent skill helps you prepare and track campus job applications in China. It’s for students and recent graduates targeting non-technical roles. Download and unzip a release, then copy the `campus-recruiting-skill` folder into your agent’s skills directory.
 
-## v1.3.0 能帮你做什么
+## v1.3.1 能帮你做什么
 
 | 你想做什么 | 给 Skill 什么 | 会得到什么 |
 | --- | --- | --- |
@@ -16,6 +16,8 @@ This open-source agent skill helps you prepare and track campus job applications
 | 准备投递包 | 一个岗位和一到两段真实经历 | 可编辑简历、网申字段稿、改写依据、附件清单和三道追问 |
 | 练笔面试、比较 Offer | 目标岗位、面试轮次，或已脱敏的书面条件 | 分轮次练习与评分，或一份可对照的条件表和待核问题 |
 | 继续上次的进度 | 已保存的本地档案或投递库 | 沿用已确认的事实，分开统计待反馈、主动退出和已知结果，给出下一步 |
+
+v1.3.1 将截止提醒单独置顶，显示绝对日期、北京时间、剩余时间和下一步。仅有日期或来源冲突时保留待核，倒计时注明计算时点。
 
 ## 三步安装
 
@@ -33,15 +35,17 @@ This open-source agent skill helps you prepare and track campus job applications
 
 以下岗位、经历和统计均为合成示例。第一步和第二步使用一份综合职能岗 JD，第三步用六条模拟投递演示漏斗。
 
-### 01 · 判断现在该投还是备料
+### 01 · 先看截止提醒，再核对资格
 
-候选人已知的届次和学历符合。六级或同等外语证明、网申开放状态还待核。此时可以先准备材料，待官网和网申页确认岗位开放、资格核对无误后再由本人投递。
+这条模拟岗位在 11 月 13 日 18:00 截止。按北京时间 2026 年 11 月 12 日 09:00 回放，投递包顶部显示「明天截止」「还剩 33 小时」。六级或同等外语证明仍待核，下一步先确认资格与志愿限制。
 
-![岗位判断示例。网申状态与英语要求待核，班费记录列为可迁移经验。](docs/images/job-check.png)
+![投递包顶部的截止提醒，显示明天截止、北京时间、剩余33小时和资格核验动作，计算时点为2026年11月12日09:00。](docs/images/v1.3.1-deadline.png)
+
+倒计时按生成时点显示，查看旧记录时需重新核验。公告只给日期时提示具体时刻待核，来源冲突时暂停倒计时。 [打开可重放的完整示例](examples/deadline-visibility.md)
 
 ### 02 · 把真实经历写进投递包
 
-简历沿用班费记录和公示这两项已知事实。投递包展示哪些措辞有证据、哪些字段还要补，并给出可练的追问。 [打开完整示例](examples/application.md)
+简历沿用班费记录和公示这两项已知事实。投递包展示哪些措辞有证据、哪些字段还要补，并给出可练的追问。 [打开完整示例](examples/deadline-visibility.md)
 
 ![可编辑简历片段与面试追问，包含评分要点和红线。](docs/images/application-packet.png)
 
@@ -92,6 +96,8 @@ python3 scripts/candidate_profile.py 我的求职档案.local.json init
 - [本地投递记录和每周复盘](references/application-log.md) · [行为回归](evals/README.md) · [简历质量盲评](evals/quality/README.md)
 
 ## 评估现状
+
+v1.3.1 的截止展示由[6 项边界与展示测试](tests/test_deadline_visibility.py)覆盖，项目共 53 项单测。以下简历盲评和短答压力测试记录来自 v1.3.0。
 
 - 简历质量盲评共 9 对，v1.3.0 为 **4 胜、4 平、1 负**。评估使用 3 个合成案例和 1 名模型评审。
 - 22 条行为用例进行了 3 轮短答压力测试，共 66 次。**20/66** 满足全部必需项，**65/66** 无禁止项。
